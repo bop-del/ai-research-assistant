@@ -30,6 +30,13 @@ def run_pipeline(db: Database, dry_run: bool = False, limit: int | None = None) 
     feed_manager = FeedManager(db)
     skill_runner = SkillRunner()
 
+    # Validate required skills are installed
+    missing_skills = skill_runner.validate_skills()
+    if missing_skills:
+        logger.error(f"Missing required skills: {', '.join(missing_skills)}")
+        logger.error("Install skills from obsidian-workflow-skills repo to ~/.claude/skills/")
+        return PipelineResult()
+
     # Check for catch-up (missed runs)
     last_run = db.get_last_successful_run()
     if last_run:

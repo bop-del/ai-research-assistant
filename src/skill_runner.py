@@ -40,6 +40,20 @@ class SkillRunner:
     }
 
     VAULT_PATH = Path.home() / "Obsidian" / "Professional vault"
+    SKILLS_PATH = Path.home() / ".claude" / "skills"
+
+    def validate_skills(self) -> list[str]:
+        """Check that all required skills are installed.
+
+        Returns list of missing skill names. Empty list means all OK.
+        """
+        missing = []
+        for category, config in self.SKILL_CONFIG.items():
+            skill_name = config["skill"]
+            skill_path = self.SKILLS_PATH / skill_name
+            if not skill_path.exists():
+                missing.append(skill_name)
+        return missing
 
     def run_skill(self, entry: Entry) -> SkillResult:
         """Invoke appropriate skill for entry and verify output."""

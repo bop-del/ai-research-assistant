@@ -96,3 +96,18 @@ def test_extract_note_path_backtick_format():
     assert path is not None
     assert path.name == "Netflix Article.md"
     assert "Clippings" in str(path)
+
+
+def test_validate_skills_returns_missing():
+    """Should return list of missing skills."""
+    from src.skill_runner import SkillRunner
+
+    runner = SkillRunner()
+    # Point to a non-existent path to simulate missing skills
+    runner.SKILLS_PATH = Path("/nonexistent/path")
+
+    missing = runner.validate_skills()
+
+    assert "article" in missing
+    assert "youtube" in missing
+    assert "podcast" in missing
