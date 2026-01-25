@@ -26,15 +26,20 @@ def cli():
 @click.option("--dry-run", is_flag=True, help="Show what would be processed without doing it")
 def run(dry_run: bool):
     """Run the content pipeline."""
-    # Placeholder - will be implemented in Phase 4
-    click.echo("Pipeline not yet implemented. Use --dry-run to preview.")
-    if dry_run:
-        db = get_db()
-        fm = FeedManager(db)
-        entries = fm.fetch_new_entries()
-        for entry in entries:
-            click.echo(f"[DRY RUN] Would process: {entry.title} ({entry.category})")
-        click.echo(f"Total: {len(entries)} entries")
+    import logging
+
+    from src.pipeline import run_pipeline
+
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+
+    db = get_db()
+    result = run_pipeline(db, dry_run=dry_run)
+
+    click.echo(f"Processed: {result.processed}, Failed: {result.failed}")
+    if result.retried:
+        click.echo(f"Retried: {result.retried}")
+    if result.skipped:
+        click.echo(f"Skipped (dry run): {result.skipped}")
 
 
 @cli.command()
