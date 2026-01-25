@@ -16,6 +16,8 @@ Automated research pipeline that fetches articles, YouTube videos, and podcasts 
 # Install dependencies
 uv sync
 
+# Install required skills (see Prerequisites)
+
 # Add some feeds
 uv run ai-research-assistant feeds add "https://stratechery.com/feed/" -c articles
 
@@ -26,11 +28,34 @@ uv run ai-research-assistant run
 uv run ai-research-assistant status
 ```
 
+## Prerequisites
+
+### 1. Claude Code Skills
+
+This pipeline requires skills from [obsidian-workflow-skills](https://github.com/jensechterling/obsidian-workflow-skills):
+
+```bash
+# Clone the skills repo
+git clone https://github.com/jensechterling/obsidian-workflow-skills.git
+
+# Install skills to Claude Code
+cd obsidian-workflow-skills
+./install.sh
+```
+
+Required skills: `article`, `youtube`, `podcast`
+
+### 2. Obsidian Vault
+
+Skills write notes to your Obsidian vault. Ensure you have:
+- Vault at `~/Obsidian/Professional vault/` (or update `VAULT_PATH` in `src/skill_runner.py`)
+- `interest-profile.md` in vault root for personalized suggestions
+
 ## Installation
 
 ```bash
 # Clone repo
-git clone https://github.com/YOUR_USERNAME/ai-research-assistant.git
+git clone https://github.com/jensechterling/ai-research-assistant.git
 cd ai-research-assistant
 
 # Install dependencies
@@ -45,17 +70,20 @@ uv sync
 | Command | Description |
 |---------|-------------|
 | `ai-research-assistant run` | Run the pipeline |
+| `ai-research-assistant run --limit N` | Process only N items (for testing) |
 | `ai-research-assistant run --dry-run` | Preview without processing |
 | `ai-research-assistant status` | Show pending items and stats |
 | `ai-research-assistant feeds add URL` | Add a feed |
 | `ai-research-assistant feeds list` | List all feeds |
 | `ai-research-assistant feeds export` | Export to OPML |
+| `ai-research-assistant feeds import FILE` | Import from OPML |
 
 ## Dependencies
 
 - Python 3.11+
 - uv (package manager)
 - Claude Code CLI
+- [obsidian-workflow-skills](https://github.com/jensechterling/obsidian-workflow-skills)
 
 ## License
 
