@@ -114,3 +114,37 @@ class Database:
             (entry_guid, feed_id, entry_url, entry_title, str(note_path) if note_path else None),
         )
         self.commit()
+
+    def record_run_start(self) -> int:
+        """Start a new pipeline run, return run_id."""
+        cursor = self.execute(
+            "INSERT INTO pipeline_runs (status) VALUES (?)",
+            ("running",),
+        )
+        self.commit()
+        return cursor.lastrowid
+
+    def record_run_complete(self, run_id: int, processed: int, failed: int) -> None:
+        """Mark pipeline run as complete with stats."""
+        self.execute(
+            """UPDATE pipeline_runs
+               SET completed_at = CURRENT_TIMESTAMP,
+                   items_processed = ?,
+                   items_failed = ?,
+                   status = ?
+               WHERE id = ?""",
+            (processed, failed, "completed", run_id),
+        )
+        self.commit()
+
+    def get_last_successful_run(self) -> datetime | None:
+        """Get timestamp of last completed pipeline run."""
+        cursor = self.execute(
+            """SELECT completed_at FROM pipeline_runs
+               WHERE status = 'completed'
+               ORDER BY completed_at DESC LIMIT 1"""
+        )
+        row = cursor.fetchone()
+        if row and row["completed_at"]:
+            return datetime.fromisoformat(row["completed_at"])
+        return None

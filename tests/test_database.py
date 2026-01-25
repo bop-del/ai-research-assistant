@@ -59,3 +59,45 @@ def test_mark_processed_and_is_processed():
         )
 
         assert db.is_processed("guid-123") is True
+
+
+def test_record_run_start_and_complete():
+    """Pipeline run should be trackable from start to completion."""
+    from src.database import Database
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_path = Path(tmpdir) / "test.db"
+        db = Database(db_path)
+
+        # Start a run
+        run_id = db.record_run_start()
+        assert run_id == 1
+
+        # Complete the run
+        db.record_run_complete(run_id, processed=5, failed=1)
+
+        # Verify
+        row = db.execute("SELECT * FROM pipeline_runs WHERE id = ?", (run_id,)).fetchone()
+        assert row["status"] == "completed"
+        assert row["items_processed"] == 5
+        assert row["items_failed"] == 1
+
+
+def test_get_last_successful_run():
+    """get_last_successful_run should return timestamp of last completed run."""
+    from src.database import Database
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_path = Path(tmpdir) / "test.db"
+        db = Database(db_path)
+
+        # No runs yet
+        assert db.get_last_successful_run() is None
+
+        # Add a completed run
+        run_id = db.record_run_start()
+        db.record_run_complete(run_id, processed=3, failed=0)
+
+        # Should now have a timestamp
+        last_run = db.get_last_successful_run()
+        assert last_run is not None
