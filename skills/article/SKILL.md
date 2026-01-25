@@ -1,6 +1,6 @@
 ---
 name: article
-description: Extract and summarize web articles into Obsidian notes with personalized insights connecting content to your work priorities
+description: Use when processing blog posts, newsletter articles, or industry publications into Obsidian notes with personalized suggestions
 ---
 
 # Article Analysis
