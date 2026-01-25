@@ -25,7 +25,7 @@ class PipelineResult:
     failures: list[tuple[Entry, str]] = field(default_factory=list)
 
 
-def run_pipeline(db: Database, dry_run: bool = False) -> PipelineResult:
+def run_pipeline(db: Database, dry_run: bool = False, limit: int | None = None) -> PipelineResult:
     """Execute the content pipeline."""
     feed_manager = FeedManager(db)
     skill_runner = SkillRunner()
@@ -63,7 +63,12 @@ def run_pipeline(db: Database, dry_run: bool = False) -> PipelineResult:
 
     all_entries = new_entries + retry_entries
 
-    logger.info(f"Found {len(new_entries)} new entries, {len(retry_entries)} retries")
+    # Apply limit if specified
+    if limit is not None and limit < len(all_entries):
+        all_entries = all_entries[:limit]
+        logger.info(f"Found {len(new_entries)} new entries, {len(retry_entries)} retries (limited to {limit})")
+    else:
+        logger.info(f"Found {len(new_entries)} new entries, {len(retry_entries)} retries")
 
     if dry_run:
         for entry in all_entries:

@@ -1,6 +1,6 @@
 """Claude Code skill invocation."""
+import re
 import subprocess
-import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -86,14 +86,23 @@ class SkillRunner:
                 stderr=result.stderr,
             )
 
-        # Verify note was created
-        note_path = self._find_created_note(entry.title, output_folder)
+        # Extract note path from skill output
+        note_path = self._extract_note_path(result.stdout, output_folder)
 
         if note_path is None:
             return SkillResult(
                 success=False,
                 note_path=None,
-                error="Skill completed but no note found in expected location",
+                error="Skill completed but no note path found in output",
+                stdout=result.stdout,
+                stderr=result.stderr,
+            )
+
+        if not note_path.exists():
+            return SkillResult(
+                success=False,
+                note_path=None,
+                error=f"Skill reported creating note but file not found: {note_path}",
                 stdout=result.stdout,
                 stderr=result.stderr,
             )
@@ -106,38 +115,47 @@ class SkillRunner:
             stderr=result.stderr,
         )
 
-    def _find_created_note(self, title: str, folder: str) -> Path | None:
-        """Find the note created by the skill."""
+    def _extract_note_path(self, stdout: str, folder: str) -> Path | None:
+        """Extract note path from skill output.
+
+        Skills typically output lines like:
+        - "Done. I've saved the article analysis to **Clippings/Title.md**."
+        - "Done. I've created the note at `Clippings/Title.md`."
+        - "Note saved to Clippings/Youtube extractions/Title.md"
+        """
         output_dir = self.VAULT_PATH / folder
-        safe_title = self._sanitize_filename(title)
 
-        # Check for exact match
-        expected_path = output_dir / f"{safe_title}.md"
-        if expected_path.exists():
-            return expected_path
+        # Pattern 1: **Folder/Filename.md** (bold markdown)
+        bold_pattern = r"\*\*([^*]+\.md)\*\*"
+        match = re.search(bold_pattern, stdout)
+        if match:
+            relative_path = match.group(1)
+            if "/" in relative_path:
+                return self.VAULT_PATH / relative_path
+            return output_dir / relative_path
 
-        # Check for recently modified files (within last 60 seconds)
-        now = time.time()
-        for path in output_dir.glob("*.md"):
-            if now - path.stat().st_mtime < 60:
-                return path
+        # Pattern 2: `Folder/Filename.md` (backtick code format)
+        backtick_pattern = r"`([^`]+\.md)`"
+        match = re.search(backtick_pattern, stdout)
+        if match:
+            relative_path = match.group(1)
+            if "/" in relative_path:
+                return self.VAULT_PATH / relative_path
+            return output_dir / relative_path
+
+        # Pattern 3: Folder/Filename.md (no formatting)
+        path_pattern = rf"({re.escape(folder)}/[^\s]+\.md)"
+        match = re.search(path_pattern, stdout)
+        if match:
+            return self.VAULT_PATH / match.group(1)
+
+        # Pattern 4: Just filename.md after "saved to" or similar
+        saved_pattern = r"saved (?:to|at|in) [^\n]*?([A-Za-z0-9][^\s]*\.md)"
+        match = re.search(saved_pattern, stdout, re.IGNORECASE)
+        if match:
+            filename = match.group(1)
+            if "/" in filename:
+                return self.VAULT_PATH / filename
+            return output_dir / filename
 
         return None
-
-    def _sanitize_filename(self, title: str) -> str:
-        """Remove/replace characters invalid in filenames."""
-        replacements = {
-            "/": "-",
-            "\\": "-",
-            ":": " -",
-            "*": "",
-            "?": "",
-            '"': "'",
-            "<": "",
-            ">": "",
-            "|": "-",
-        }
-        result = title
-        for old, new in replacements.items():
-            result = result.replace(old, new)
-        return result.strip()[:100]

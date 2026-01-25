@@ -38,10 +38,14 @@ def test_skill_runner_runs_command():
     )
 
     with patch("subprocess.run") as mock_run:
-        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="Done. I've saved the article analysis to **Clippings/Test Article.md**.",
+            stderr="",
+        )
 
-        # Mock _find_created_note to return a path
-        with patch.object(runner, "_find_created_note", return_value=Path("/vault/test.md")):
+        # Mock path.exists() to return True
+        with patch.object(Path, "exists", return_value=True):
             result = runner.run_skill(entry)
 
         # Verify command was called correctly
@@ -50,3 +54,45 @@ def test_skill_runner_runs_command():
         assert "claude" in call_args
         assert "--dangerously-skip-permissions" in call_args
         assert "/article https://example.com/article" in " ".join(call_args)
+
+
+def test_extract_note_path_bold_markdown():
+    """Should extract path from **Folder/File.md** format."""
+    from src.skill_runner import SkillRunner
+
+    runner = SkillRunner()
+    stdout = "Done. I've saved the article analysis to **Clippings/Test Article.md**."
+
+    path = runner._extract_note_path(stdout, "Clippings")
+
+    assert path is not None
+    assert path.name == "Test Article.md"
+    assert "Clippings" in str(path)
+
+
+def test_extract_note_path_nested_folder():
+    """Should extract path from nested folder format."""
+    from src.skill_runner import SkillRunner
+
+    runner = SkillRunner()
+    stdout = "Note saved to **Clippings/Youtube extractions/Video Title.md**"
+
+    path = runner._extract_note_path(stdout, "Clippings/Youtube extractions")
+
+    assert path is not None
+    assert path.name == "Video Title.md"
+    assert "Youtube extractions" in str(path)
+
+
+def test_extract_note_path_backtick_format():
+    """Should extract path from `Folder/File.md` backtick format."""
+    from src.skill_runner import SkillRunner
+
+    runner = SkillRunner()
+    stdout = "Done. I've created the note at `Clippings/Netflix Article.md`."
+
+    path = runner._extract_note_path(stdout, "Clippings")
+
+    assert path is not None
+    assert path.name == "Netflix Article.md"
+    assert "Clippings" in str(path)
