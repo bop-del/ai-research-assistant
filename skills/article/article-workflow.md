@@ -137,12 +137,15 @@ Examples:
 
 Sanitize title: remove special characters, replace spaces with hyphens, truncate to 80 chars.
 
+**CRITICAL:** The `url` field in frontmatter and the URL in Metadata section MUST be the EXACT input URL provided by the user. Do NOT regenerate, retype, or modify the URL in any way. Copy it character-for-character.
+
 #### File Structure
 
 ```markdown
 ---
 created: YYYY-MM-DD
 tags: [type/reference, area/learning, status/inbox, source/{source_slug}]
+url: {EXACT input URL - copy verbatim, do not retype}
 source: {Article URL}
 author: "[[{Author Name}]]"
 ---
@@ -153,7 +156,7 @@ author: "[[{Author Name}]]"
 - **Source:** {publication/site name}
 - **Author:** {author}
 - **Published:** {formatted date}
-- **URL:** {full URL}
+- **URL:** {EXACT input URL - copy verbatim from user input}
 
 ## Management Summary
 
@@ -205,6 +208,7 @@ author: "[[{Author Name}]]"
 5. **Use Obsidian MCP** – Write output using `obsidian:write_note` tool
 6. **Include full text** – Store in collapsed callout for search
 7. **Auto-generate source slug** – Don't rely on manual mapping
+8. **NEVER modify URLs** – Copy the input URL exactly as provided. Do not retype URLs from memory or regenerate them. URLs contain dates and identifiers that must be preserved exactly.
 
 ## Error Handling
 
