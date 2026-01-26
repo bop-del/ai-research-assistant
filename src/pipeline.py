@@ -25,7 +25,7 @@ class PipelineResult:
     failures: list[tuple[Entry, str]] = field(default_factory=list)
 
 
-def run_pipeline(db: Database, dry_run: bool = False, limit: int | None = None) -> PipelineResult:
+def run_pipeline(db: Database, dry_run: bool = False, limit: int | None = None, verbose: bool = False) -> PipelineResult:
     """Execute the content pipeline."""
     feed_manager = FeedManager(db)
     skill_runner = SkillRunner()
@@ -84,9 +84,14 @@ def run_pipeline(db: Database, dry_run: bool = False, limit: int | None = None) 
 
     # Process entries sequentially
     result = PipelineResult()
+    total = len(all_entries)
 
-    for entry in all_entries:
+    for idx, entry in enumerate(all_entries, 1):
         is_retry = entry in retry_entries
+
+        if verbose:
+            retry_marker = " [retry]" if is_retry else ""
+            logger.info(f"[{idx}/{total}] Processing: {entry.title}{retry_marker}")
 
         try:
             skill_result = skill_runner.run_skill(entry)
@@ -108,7 +113,8 @@ def run_pipeline(db: Database, dry_run: bool = False, limit: int | None = None) 
 
                 result.created_notes.append(skill_result.note_path)
                 result.processed += 1
-                logger.info(f"Processed: {entry.title}")
+                if verbose:
+                    logger.info(f"    ✓ Created: {skill_result.note_path.name}")
             else:
                 # Add to retry queue
                 db.add_to_retry_queue(
@@ -121,7 +127,8 @@ def run_pipeline(db: Database, dry_run: bool = False, limit: int | None = None) 
                 )
                 result.failed += 1
                 result.failures.append((entry, skill_result.error or "Unknown error"))
-                logger.error(f"Failed: {entry.title} - {skill_result.error}")
+                if verbose:
+                    logger.error(f"    ✗ {skill_result.error}")
 
         except Exception as e:
             db.add_to_retry_queue(
@@ -134,7 +141,8 @@ def run_pipeline(db: Database, dry_run: bool = False, limit: int | None = None) 
             )
             result.failed += 1
             result.failures.append((entry, str(e)))
-            logger.error(f"Exception processing {entry.title}: {e}")
+            if verbose:
+                logger.error(f"    ✗ Exception: {e}")
 
     # Post-process with /evaluate-knowledge
     if result.created_notes:

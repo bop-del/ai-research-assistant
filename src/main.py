@@ -25,7 +25,8 @@ def cli():
 @cli.command()
 @click.option("--dry-run", is_flag=True, help="Show what would be processed without doing it")
 @click.option("--limit", "-n", type=int, default=None, help="Limit number of items to process")
-def run(dry_run: bool, limit: int | None):
+@click.option("--verbose", "-v", is_flag=True, help="Show detailed progress during execution")
+def run(dry_run: bool, limit: int | None, verbose: bool):
     """Run the content pipeline."""
     import logging
 
@@ -34,7 +35,7 @@ def run(dry_run: bool, limit: int | None):
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
     db = get_db()
-    result = run_pipeline(db, dry_run=dry_run, limit=limit)
+    result = run_pipeline(db, dry_run=dry_run, limit=limit, verbose=verbose)
 
     click.echo(f"Processed: {result.processed}, Failed: {result.failed}")
     if result.retried:
