@@ -116,7 +116,18 @@ class Database:
         self.commit()
 
     def record_run_start(self) -> int:
-        """Start a new pipeline run, return run_id."""
+        """Start a new pipeline run, return run_id.
+
+        Also cleans up any stale 'running' runs from previous interrupted executions.
+        """
+        # Mark any stale running runs as failed
+        self.execute(
+            """UPDATE pipeline_runs
+               SET status = 'failed',
+                   completed_at = CURRENT_TIMESTAMP
+               WHERE status = 'running'"""
+        )
+
         cursor = self.execute(
             "INSERT INTO pipeline_runs (status) VALUES (?)",
             ("running",),
@@ -198,10 +209,15 @@ class Database:
         self.commit()
 
     def get_retry_candidates(self) -> list[sqlite3.Row]:
-        """Get entries due for retry (next_retry_at <= now)."""
+        """Get entries due for retry (next_retry_at <= now).
+
+        Excludes entries that have already been processed to avoid
+        UNIQUE constraint violations.
+        """
         cursor = self.execute(
             """SELECT * FROM retry_queue
                WHERE next_retry_at <= CURRENT_TIMESTAMP
+                 AND entry_guid NOT IN (SELECT entry_guid FROM processed_entries)
                ORDER BY next_retry_at"""
         )
         return cursor.fetchall()

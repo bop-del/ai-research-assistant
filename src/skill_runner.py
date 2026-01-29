@@ -138,6 +138,7 @@ class SkillRunner:
         - "Done. I've saved the article analysis to **Clippings/Title.md**."
         - "Done. I've created the note at `Clippings/Title.md`."
         - "Note saved to Clippings/Youtube extractions/Title.md"
+        - "Successfully wrote note to Clippings/Article extractions/Title.md"
         """
         output_dir = self.VAULT_PATH / folder
 
@@ -159,17 +160,17 @@ class SkillRunner:
                 return self.VAULT_PATH / relative_path
             return output_dir / relative_path
 
-        # Pattern 3: Folder/Filename.md (no formatting)
-        path_pattern = rf"({re.escape(folder)}/[^\s]+\.md)"
+        # Pattern 3: Folder/path.md (allows spaces in filename, stops at .md)
+        path_pattern = rf"({re.escape(folder)}/[^\n]+?\.md)"
         match = re.search(path_pattern, stdout)
         if match:
             return self.VAULT_PATH / match.group(1)
 
-        # Pattern 4: Just filename.md after "saved to" or similar
-        saved_pattern = r"saved (?:to|at|in) [^\n]*?([A-Za-z0-9][^\s]*\.md)"
-        match = re.search(saved_pattern, stdout, re.IGNORECASE)
+        # Pattern 4: "wrote/written/saved/created ... to/at/in path.md"
+        action_pattern = r"(?:wrote|written|saved|created)[^\n]*?(?:to|at|in)\s+([A-Za-z][^\n]+?\.md)"
+        match = re.search(action_pattern, stdout, re.IGNORECASE)
         if match:
-            filename = match.group(1)
+            filename = match.group(1).strip()
             if "/" in filename:
                 return self.VAULT_PATH / filename
             return output_dir / filename
