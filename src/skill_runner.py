@@ -24,7 +24,7 @@ class SkillRunner:
     SKILL_CONFIG = {
         "articles": {
             "skill": "article",
-            "timeout": 120,
+            "timeout": 180,
             "output_folder": "Clippings",
         },
         "youtube": {
