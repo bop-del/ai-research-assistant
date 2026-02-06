@@ -94,6 +94,14 @@ def run_pipeline(db: Database, dry_run: bool = False, limit: int | None = None, 
             logger.info(f"[{idx}/{total}] Processing: {entry.title}{retry_marker}")
 
         try:
+            # Skip if already processed (clears zombie retries)
+            if db.is_processed(entry.guid):
+                if is_retry:
+                    db.remove_from_retry_queue(entry.guid)
+                    if verbose:
+                        logger.info("    Already processed, removed from retry queue")
+                continue
+
             skill_result = skill_runner.run_skill(entry)
 
             if skill_result.success:
