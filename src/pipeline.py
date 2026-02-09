@@ -200,16 +200,20 @@ def run_pipeline(db: Database, dry_run: bool = False, limit: int | None = None, 
 
 def send_notification(result: PipelineResult) -> None:
     """Send macOS notification with pipeline results."""
-    if result.failed == 0:
-        title = "Content Pipeline"
-        message = f"Processed {result.processed} items"
-    else:
-        title = "Content Pipeline"
-        message = f"Processed {result.processed}, Failed {result.failed}"
+    title = "Content Pipeline"
 
-    if result.failures:
+    if result.skipped > 0:
+        message = f"Dry run: {result.skipped} items previewed"
+    elif result.processed == 0 and result.failed == 0:
+        message = "No items to process"
+    elif result.failed > 0:
+        message = f"Processed {result.processed}, Failed {result.failed}"
         first_fail = result.failures[0]
         message += f"\nFirst failure: {first_fail[0].title[:30]}..."
+    else:
+        message = f"Processed {result.processed} items"
+        if result.retried > 0:
+            message += f" ({result.retried} retried)"
 
     try:
         subprocess.run(
