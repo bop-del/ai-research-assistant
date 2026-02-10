@@ -8,6 +8,20 @@ from src.config import get_folder, get_project_dir, get_skills_path, get_vault_p
 from src.models import Entry
 
 
+# Patterns indicating content that will never be extractable (no point retrying)
+PERMANENT_FAILURE_PATTERNS = [
+    "paywall",
+    "behind a paywall",
+    "subscription required",
+    "subscribers only",
+    "premium content",
+    "sign in to read",
+    "this article appears to be behind",
+    "could only extract the headline",
+    "copy/paste the article text",
+]
+
+
 @dataclass
 class SkillResult:
     """Result from running a skill."""
@@ -17,6 +31,7 @@ class SkillResult:
     error: str | None
     stdout: str
     stderr: str
+    permanent: bool = False
 
 
 class SkillRunner:
@@ -115,12 +130,21 @@ class SkillRunner:
         note_path = self._extract_note_path(result.stdout, output_folder)
 
         if note_path is None:
+            # Check if this is a permanent failure (paywall, etc.)
+            output_lower = result.stdout.lower()
+            is_permanent = any(p in output_lower for p in PERMANENT_FAILURE_PATTERNS)
+            error_msg = (
+                "Content behind paywall or not extractable"
+                if is_permanent
+                else "Skill completed but no note path found in output"
+            )
             return SkillResult(
                 success=False,
                 note_path=None,
-                error="Skill completed but no note path found in output",
+                error=error_msg,
                 stdout=result.stdout,
                 stderr=result.stderr,
+                permanent=is_permanent,
             )
 
         if not note_path.exists():

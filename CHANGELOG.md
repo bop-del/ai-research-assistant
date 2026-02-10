@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- **Pipeline lock** — prevents concurrent pipeline runs using `fcntl.flock()`; second invocation exits with clear error message and PID of holding process
+- **`--force` flag** — `ai-research-assistant run --force` bypasses the lock when needed
+- **Permanent failure detection** — paywalled and inaccessible content is detected via pattern matching on skill output, skipping the retry queue with a `[PERMANENT]` log prefix and paywall count in notifications
+
 ## [0.2.0] - 2026-02-10
 
 First shareable release. Skills merged into this repository and the project generalized so anyone with an Obsidian vault and Claude Code can use it.

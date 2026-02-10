@@ -278,3 +278,62 @@ def test_vault_path_property():
 
     runner = SkillRunner(config=_test_config())
     assert runner.vault_path == Path("/tmp/test-vault")
+
+
+def test_paywall_output_sets_permanent_true():
+    """Paywall pattern in skill output should set SkillResult.permanent = True."""
+    from src.skill_runner import SkillRunner
+
+    runner = SkillRunner(config=_test_config())
+    entry = _make_entry()
+
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="This article appears to be behind a paywall. I could only extract the headline.",
+            stderr="",
+        )
+        result = runner.run_skill(entry)
+
+    assert result.success is False
+    assert result.permanent is True
+    assert "paywall" in result.error.lower()
+
+
+def test_no_paywall_pattern_sets_permanent_false():
+    """Output without paywall patterns should set SkillResult.permanent = False."""
+    from src.skill_runner import SkillRunner
+
+    runner = SkillRunner(config=_test_config())
+    entry = _make_entry()
+
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="I processed the article but something went wrong.",
+            stderr="",
+        )
+        result = runner.run_skill(entry)
+
+    assert result.success is False
+    assert result.permanent is False
+    assert "no note path found" in result.error.lower()
+
+
+def test_nonzero_exit_is_not_permanent():
+    """Non-zero exit code should not trigger permanent failure detection."""
+    from src.skill_runner import SkillRunner
+
+    runner = SkillRunner(config=_test_config())
+    entry = _make_entry()
+
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(
+            returncode=1,
+            stdout="subscription required",
+            stderr="",
+        )
+        result = runner.run_skill(entry)
+
+    assert result.success is False
+    assert result.permanent is False
