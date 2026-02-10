@@ -3,8 +3,8 @@ revision = 3
 requires-python = ">=3.11"
 
 [[package]]
-name = "ai-research-assistant-for-obsidian"
-version = "0.2.0"
+name = "ai-research-assistant"
+version = "0.3.0"
 source = { editable = "." }
 dependencies = [
     { name = "click" },

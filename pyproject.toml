@@ -1,6 +1,6 @@
 [project]
-name = "ai-research-assistant-for-obsidian"
-version = "0.2.0"
+name = "ai-research-assistant"
+version = "0.3.0"
 description = "Automated RSS pipeline that turns articles, videos, and podcasts into Obsidian notes using Claude Code"
 requires-python = ">=3.11"
 

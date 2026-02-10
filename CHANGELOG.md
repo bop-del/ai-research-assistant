@@ -4,11 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-02-10
+
+Repository made public and hardened for open-source visibility.
+
 ### Added
 
 - **Pipeline lock** — prevents concurrent pipeline runs using `fcntl.flock()`; second invocation exits with clear error message and PID of holding process
 - **`--force` flag** — `ai-research-assistant run --force` bypasses the lock when needed
 - **Permanent failure detection** — paywalled and inaccessible content is detected via pattern matching on skill output, skipping the retry queue with a `[PERMANENT]` log prefix and paywall count in notifications
+- **SECURITY.md** — vulnerability reporting policy
+- **Contributing policy** — README section clarifying this is a personal project
+
+### Changed
+
+- **Repository made public** — open for viewing and forking
+- **Project renamed** to `ai-research-assistant` (dropped `-for-obsidian` suffix)
+- **GitHub settings** — issues, wiki, and projects disabled; branch protection enabled; topics added for discoverability
 
 ## [0.2.0] - 2026-02-10
 
@@ -32,7 +44,7 @@ First shareable release. Skills merged into this repository and the project gene
 - **All paths configurable** — vault path, folder structure, and interest profile name read from config instead of hardcoded
 - **Generic suggestion headers** — "For Work" / "For Personal Life" instead of personal references
 - **Dynamic knowledge base discovery** — evaluate-knowledge skill lists existing subfolders instead of using a hardcoded category table
-- **Project renamed** to `ai-research-assistant-for-obsidian`
+- **Project renamed** to `ai-research-assistant-for-obsidian` (later shortened to `ai-research-assistant` in 0.3.0)
 
 ### Removed
 
