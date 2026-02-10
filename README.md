@@ -27,8 +27,8 @@ Each note includes a management summary, key findings, and personalized suggesti
 
 ```bash
 # Clone and install
-git clone https://github.com/jensechterling/ai-research-assistant-for-obsidian.git
-cd ai-research-assistant-for-obsidian
+git clone https://github.com/jensechterling/ai-research-assistant.git
+cd ai-research-assistant
 uv sync
 
 # Run setup wizard
@@ -168,6 +168,10 @@ src/
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for release history.
+
+## Contributing
+
+This is a personal project. I'm not accepting pull requests or feature requests, but you're welcome to fork and adapt it for your own use.
 
 ## License
 
