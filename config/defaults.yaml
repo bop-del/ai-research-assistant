@@ -41,3 +41,8 @@ feeds:
 schedule:
   hour: 6
   minute: 0
+
+# Logging
+logging:
+  retention_days: 30
+  level: INFO  # Can override with --verbose flag
