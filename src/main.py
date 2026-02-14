@@ -456,14 +456,17 @@ def stats(output_json: bool, days: int):
         # Human-readable terminal output
         if data["last_run"]:
             lr = data["last_run"]
-            click.echo(f"Last run: {format_timestamp(lr['completed_at'])}")
-            click.echo(f"  Processed: {lr['items_processed']}, Failed: {lr['items_failed']}")
+            if lr['completed_at']:
+                click.echo(f"Last run: {format_timestamp(lr['completed_at'])}")
+                click.echo(f"  Processed: {lr['items_processed']}, Failed: {lr['items_failed']}")
+            else:
+                click.echo(f"Last run: In progress (started {format_timestamp(lr['started_at'])})")
             click.echo()
         else:
             click.echo("No runs yet\n")
 
         # Trends
-        click.echo(f"7-day trend: {trends['comparison']}")
+        click.echo(f"{days}-day trend: {trends['comparison']}")
         click.echo(f"  Recent: {trends['last_7_days']['total_processed']} items")
         click.echo(f"  Previous: {trends['previous_7_days']['total_processed']} items")
         click.echo()
