@@ -92,7 +92,7 @@ class SkillRunner:
                     str(self._mcp_config_path),
                     "--print",
                     "--dangerously-skip-permissions",
-                    f"/{skill_name} {entry.url}",
+                    f"/pkm:{skill_name} {entry.url}",
                 ],
                 capture_output=True,
                 text=True,
