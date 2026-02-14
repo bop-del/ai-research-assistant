@@ -156,8 +156,9 @@ def test_status_last_run_with_failed_items():
             src.main.get_db = original_get_db
 
 
-def test_status_watch_not_implemented_message():
-    """status --watch should show not implemented message in Task 3."""
+def test_status_watch_no_running_pipeline():
+    """status --watch should show no pipeline running when none active."""
+    from unittest.mock import patch
     from src.database import Database
     from src.main import cli
 
@@ -171,10 +172,71 @@ def test_status_watch_not_implemented_message():
         src.main.get_db = lambda: db
 
         try:
-            runner = CliRunner()
-            result = runner.invoke(cli, ['status', '--watch'])
+            # Mock time.sleep to stop after first iteration
+            # Mock it to raise KeyboardInterrupt to exit the loop
+            with patch('time.sleep', side_effect=KeyboardInterrupt):
+                runner = CliRunner()
+                result = runner.invoke(cli, ['status', '--watch'])
 
-            assert result.exit_code == 0
-            assert "Watch mode not yet implemented" in result.output
+                assert result.exit_code == 0
+                assert "Watching pipeline" in result.output
+                assert "No pipeline currently running" in result.output
+                assert "Watch stopped" in result.output
+        finally:
+            src.main.get_db = original_get_db
+
+
+def test_status_watch_with_running_pipeline():
+    """status --watch should show progress when pipeline is running."""
+    from unittest.mock import patch
+    from src.database import Database
+    from src.main import cli
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_path = Path(tmpdir) / "test.db"
+        db = Database(db_path)
+
+        # Create a feed
+        db.execute(
+            "INSERT INTO feeds (url, title, category) VALUES (?, ?, ?)",
+            ("https://example.com/feed", "Test Feed", "articles"),
+        )
+        db.commit()
+
+        # Create a running pipeline
+        run_id = db.record_run_start()
+
+        # Add some processed entries
+        db.mark_processed(
+            entry_guid="guid-1",
+            feed_id=1,
+            entry_url="https://example.com/article1",
+            entry_title="Test Article 1",
+            note_path=Path("/vault/Clippings/Articles/article1.md"),
+        )
+        db.mark_processed(
+            entry_guid="guid-2",
+            feed_id=1,
+            entry_url="https://example.com/article2",
+            entry_title="Test Article 2",
+            note_path=Path("/vault/Clippings/Articles/article2.md"),
+        )
+
+        # Override get_db to use test database
+        import src.main
+        original_get_db = src.main.get_db
+        src.main.get_db = lambda: db
+
+        try:
+            # Mock time.sleep to stop after first iteration
+            with patch('time.sleep', side_effect=KeyboardInterrupt):
+                runner = CliRunner()
+                result = runner.invoke(cli, ['status', '--watch'])
+
+                assert result.exit_code == 0
+                assert "Watching pipeline" in result.output
+                assert "Processing..." in result.output
+                assert "2 items completed" in result.output
+                assert "Watch stopped" in result.output
         finally:
             src.main.get_db = original_get_db

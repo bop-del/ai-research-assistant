@@ -68,10 +68,44 @@ def status(last_run: bool, date: str | None, watch: bool):
 
     db = get_db()
 
-    # Handle --watch flag (not yet implemented)
+    # Handle --watch flag
     if watch:
-        click.echo("Watch mode not yet implemented - coming in Task 4")
-        return
+        import sys
+        import time
+
+        click.echo("Watching pipeline (Ctrl+C to exit)...\n")
+
+        try:
+            prev_count = 0
+            while True:
+                # Get current run (most recent with status='running')
+                cursor = db.execute(
+                    "SELECT * FROM pipeline_runs WHERE status = 'running' ORDER BY started_at DESC LIMIT 1"
+                )
+                current_run = cursor.fetchone()
+
+                if current_run:
+                    # Count processed entries since run started
+                    entries_cursor = db.execute(
+                        "SELECT COUNT(*) as count FROM processed_entries WHERE processed_at >= ?",
+                        (current_run['started_at'],)
+                    )
+                    processed_count = entries_cursor.fetchone()['count']
+
+                    # Clear line and show progress
+                    sys.stdout.write(f"\r[{format_timestamp(current_run['started_at'])}] Processing... {processed_count} items completed")
+                    sys.stdout.flush()
+
+                    prev_count = processed_count
+                else:
+                    # No running pipeline
+                    sys.stdout.write(f"\rNo pipeline currently running ({prev_count} items in last run)")
+                    sys.stdout.flush()
+
+                time.sleep(2)
+        except KeyboardInterrupt:
+            click.echo("\n\nWatch stopped.")
+            return
 
     # Handle --date flag (not yet implemented)
     if date:
