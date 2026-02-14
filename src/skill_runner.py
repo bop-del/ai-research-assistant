@@ -3,6 +3,7 @@ import logging
 import os
 import re
 import subprocess
+import sys
 import time
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -131,6 +132,7 @@ class SkillRunner:
         except subprocess.TimeoutExpired:
             duration = time.perf_counter() - start_time
             self.logger.error(f"  ✗ Skill timed out after {timeout}s")
+            sys.stdout.flush()  # Ensure real-time log updates
             return SkillResult(
                 success=False,
                 note_path=None,
@@ -141,6 +143,7 @@ class SkillRunner:
         except FileNotFoundError:
             duration = time.perf_counter() - start_time
             self.logger.error(f"  ✗ Claude CLI not found in PATH")
+            sys.stdout.flush()  # Ensure real-time log updates
             return SkillResult(
                 success=False,
                 note_path=None,
@@ -155,6 +158,7 @@ class SkillRunner:
             # Error might be in stdout or stderr depending on the CLI
             error_output = result.stderr.strip() or result.stdout.strip()
             self.logger.error(f"  ✗ Skill failed ({duration:.1f}s): {error_output[:200]}")
+            sys.stdout.flush()  # Ensure real-time log updates
             return SkillResult(
                 success=False,
                 note_path=None,
@@ -176,6 +180,7 @@ class SkillRunner:
                 else "Skill completed but no note path found in output"
             )
             self.logger.warning(f"  ✗ Skill completed but no note path found ({duration:.1f}s)")
+            sys.stdout.flush()  # Ensure real-time log updates
             return SkillResult(
                 success=False,
                 note_path=None,
@@ -187,6 +192,7 @@ class SkillRunner:
 
         if not note_path.exists():
             self.logger.warning(f"  ✗ Note path not found: {note_path} ({duration:.1f}s)")
+            sys.stdout.flush()  # Ensure real-time log updates
             return SkillResult(
                 success=False,
                 note_path=None,
@@ -196,6 +202,7 @@ class SkillRunner:
             )
 
         self.logger.info(f"  ✓ Created: {note_path.name} ({duration:.1f}s)")
+        sys.stdout.flush()  # Ensure real-time log updates
         return SkillResult(
             success=True,
             note_path=note_path,
