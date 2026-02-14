@@ -73,8 +73,9 @@ class SkillRunner:
         missing = []
         for category, config in self._skill_config.items():
             skill_name = config["skill"]
-            skill_path = self._skills_path / skill_name
-            if not skill_path.exists():
+            # Check in plugin directory (pkm: namespace)
+            plugin_path = self._vault_path / "Claude" / "skills-pkm" / "skills" / skill_name
+            if not plugin_path.exists():
                 missing.append(skill_name)
         return missing
 
