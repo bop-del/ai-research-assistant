@@ -5,13 +5,16 @@ from pathlib import Path
 from datetime import datetime, timedelta
 
 
-def setup_logging(log_dir: Path, retention_days: int = 30, verbose: bool = False):
+def setup_logging(log_dir: Path, retention_days: int = 30, verbose: bool = False) -> logging.Logger:
     """Configure dual logging handlers (file + console).
 
     Args:
         log_dir: Directory for log files (created if missing)
         retention_days: How many days of logs to keep
         verbose: If True, set console to DEBUG level
+
+    Returns:
+        Configured root logger instance
     """
     # Create log directory
     log_dir.mkdir(parents=True, exist_ok=True)
@@ -27,7 +30,7 @@ def setup_logging(log_dir: Path, retention_days: int = 30, verbose: bool = False
     root_logger.handlers.clear()
 
     # File handler - daily rotation, DEBUG level
-    log_file = log_dir / f"{datetime.now().strftime('%Y-%m-%d')}.log"
+    log_file = log_dir / "pipeline.log"
     file_handler = logging.handlers.TimedRotatingFileHandler(
         filename=log_file,
         when='midnight',
@@ -53,22 +56,21 @@ def setup_logging(log_dir: Path, retention_days: int = 30, verbose: bool = False
     return root_logger
 
 
-def cleanup_old_logs(log_dir: Path, retention_days: int):
+def cleanup_old_logs(log_dir: Path, retention_days: int) -> None:
     """Delete log files older than retention_days."""
     if not log_dir.exists():
         return
 
     cutoff_date = datetime.now() - timedelta(days=retention_days)
 
-    for log_file in log_dir.glob('*.log'):
+    for log_file in log_dir.glob('pipeline.log.*'):
         try:
-            # Parse YYYY-MM-DD.log format
-            date_str = log_file.stem
+            # Parse pipeline.log.YYYY-MM-DD format
+            date_str = log_file.suffix[1:]  # Remove leading dot
             file_date = datetime.strptime(date_str, '%Y-%m-%d')
 
             if file_date < cutoff_date:
                 log_file.unlink()
-                logging.debug(f"Deleted old log file: {log_file.name}")
         except (ValueError, OSError):
             # Skip files that don't match date format or can't be deleted
             continue
