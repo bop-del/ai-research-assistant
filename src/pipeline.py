@@ -3,6 +3,7 @@ import fcntl
 import logging
 import os
 import subprocess
+import sys
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -297,12 +298,16 @@ def _run_pipeline_inner(db: Database, dry_run: bool, limit: int | None, verbose:
 
                 if subprocess_result.returncode != 0:
                     logger.warning(f"  Batch {batch_idx}/{len(batches)} failed: {subprocess_result.stderr[:200]}")
+                    sys.stdout.flush()  # Ensure errors written immediately
                 else:
                     logger.info(f"    Batch {batch_idx}/{len(batches)} done ({len(batch)} notes)")
+                    sys.stdout.flush()  # Ensure real-time log updates
             except subprocess.TimeoutExpired:
                 logger.warning(f"    Batch {batch_idx}/{len(batches)} timed out after 600s, continuing")
+                sys.stdout.flush()  # Ensure errors written immediately
             except Exception as e:
                 logger.warning(f"    Batch {batch_idx}/{len(batches)} failed: {e}, continuing")
+                sys.stdout.flush()  # Ensure errors written immediately
 
     # Record run completion
     db.record_run_complete(run_id, result.processed, result.failed)
@@ -313,6 +318,7 @@ def _run_pipeline_inner(db: Database, dry_run: bool, limit: int | None, verbose:
     # Log completion with timing
     duration = time.perf_counter() - start_time
     logger.info(f"Run complete ({duration:.1f}s total, {result.processed} processed, {result.failed} failed)")
+    sys.stdout.flush()  # Ensure final status written immediately
 
     return result
 
