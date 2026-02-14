@@ -90,7 +90,11 @@ def status(last_run: bool, date: str | None, watch: bool):
         completed = format_timestamp(run_data['completed_at']) if run_data['completed_at'] else 'In progress'
 
         if run_data['completed_at']:
-            duration = datetime.fromisoformat(run_data['completed_at']) - datetime.fromisoformat(run_data['started_at'])
+            from zoneinfo import ZoneInfo
+            # Parse timestamps as UTC (SQLite CURRENT_TIMESTAMP returns UTC)
+            completed_dt = datetime.fromisoformat(run_data['completed_at']).replace(tzinfo=ZoneInfo('UTC'))
+            started_dt = datetime.fromisoformat(run_data['started_at']).replace(tzinfo=ZoneInfo('UTC'))
+            duration = completed_dt - started_dt
             duration_str = f"{int(duration.total_seconds() // 60)}m {int(duration.total_seconds() % 60)}s"
         else:
             duration_str = 'Running...'
@@ -109,15 +113,29 @@ def status(last_run: bool, date: str | None, watch: bool):
         if run_data['entries']:
             click.echo("Items Processed:")
             for entry in run_data['entries']:
-                processed_time = format_timestamp(entry['processed_at'])
-                # Determine destination from note_path
-                note_path = entry.get('note_path', '')
-                if 'Knowledge/' in note_path:
-                    dest = f"→ {note_path.split('Knowledge/')[1].split('/')[0]}/"
-                elif 'Discarded' in note_path:
-                    dest = "→ Discarded"
+                # Determine destination from note_path using pathlib for safe parsing
+                note_path_str = entry.get('note_path', '')
+                if note_path_str:
+                    note_path = Path(note_path_str)
+                    parts = note_path.parts
+
+                    # Find destination based on path structure
+                    if 'Knowledge' in parts:
+                        # Get the folder after 'Knowledge/'
+                        try:
+                            knowledge_idx = parts.index('Knowledge')
+                            if knowledge_idx + 1 < len(parts):
+                                dest = f"→ {parts[knowledge_idx + 1]}/"
+                            else:
+                                dest = "→ Knowledge/"
+                        except (ValueError, IndexError):
+                            dest = "→ Knowledge/"
+                    elif 'Discarded' in parts:
+                        dest = "→ Discarded"
+                    else:
+                        dest = "→ Clippings/"
                 else:
-                    dest = "→ Clippings/"
+                    dest = "→ Unknown"
 
                 click.echo(f"  ✓ {entry['entry_title']} {dest}")
             click.echo()
