@@ -1,5 +1,7 @@
 # AI Research Assistant for Obsidian
 
+> **Note:** This is a fork customized for Boris's PKM workflow. See [README-boris.md](README-boris.md) for Boris-specific setup including launchd automation with wake-from-sleep scheduling.
+
 Automated RSS pipeline that fetches articles, YouTube videos, and podcasts, then uses [Claude Code](https://docs.anthropic.com/en/docs/claude-code) skills to create personalized analysis notes in your Obsidian vault.
 
 ```
