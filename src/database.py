@@ -2,6 +2,30 @@
 import sqlite3
 from pathlib import Path
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
+
+def format_timestamp(utc_str: str, tz_name: str = 'Europe/Berlin') -> str:
+    """Convert UTC timestamp string to local timezone for display.
+
+    Args:
+        utc_str: UTC timestamp as string from SQLite
+        tz_name: Target timezone (default: Europe/Berlin for Boris)
+
+    Returns:
+        Formatted string in local time: 'YYYY-MM-DD HH:MM:SS'
+    """
+    if not utc_str:
+        return 'N/A'
+
+    # SQLite CURRENT_TIMESTAMP returns UTC string
+    utc_dt = datetime.fromisoformat(utc_str.replace(' ', 'T'))
+
+    # Convert to local timezone
+    local_tz = ZoneInfo(tz_name)
+    local_dt = utc_dt.replace(tzinfo=ZoneInfo('UTC')).astimezone(local_tz)
+
+    return local_dt.strftime('%Y-%m-%d %H:%M:%S')
 
 
 class Database:
