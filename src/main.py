@@ -2,6 +2,7 @@
 import re
 from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import click
 
@@ -133,8 +134,12 @@ def _calculate_health(db: Database, log_dir: Path) -> dict:
         }
 
     # Check last run time
-    last_run_time = datetime.fromisoformat(last_run["completed_at"])
-    hours_since = (datetime.now() - last_run_time).total_seconds() / 3600
+    if not last_run["completed_at"]:
+        alerts.append("⚠️ Last run incomplete or failed")
+        return {"status": "error", "alerts": alerts}
+
+    last_run_time = datetime.fromisoformat(last_run["completed_at"]).replace(tzinfo=ZoneInfo('UTC'))
+    hours_since = (datetime.now(ZoneInfo('UTC')) - last_run_time).total_seconds() / 3600
 
     if hours_since > 48:
         alerts.append("⚠️ No successful run in 48 hours")
@@ -171,7 +176,7 @@ def _calculate_health(db: Database, log_dir: Path) -> dict:
     }
 
 
-def _generate_recommendations(db: Database, log_dir: Path) -> list[str]:
+def _generate_recommendations(db: Database, log_dir: Path, health: dict) -> list[str]:
     """Generate actionable recommendations based on metrics.
 
     Returns list of recommendation strings (max 5).
@@ -192,8 +197,7 @@ def _generate_recommendations(db: Database, log_dir: Path) -> list[str]:
             f"Investigate slow feed: {title} took {duration:.0f}s"
         )
 
-    # Check health for issues
-    health = _calculate_health(db, log_dir)
+    # Check health for issues (using passed-in health dict)
     if any("48 hours" in alert for alert in health["alerts"]):
         recommendations.append(
             "Verify launchd job: launchctl list | grep ai-research-assistant"
