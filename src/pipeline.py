@@ -269,7 +269,7 @@ def _run_pipeline_inner(db: Database, dry_run: bool, limit: int | None, verbose:
                         "claude",
                         "--print",
                         "--dangerously-skip-permissions",
-                        f"/evaluate-knowledge {file_list}",
+                        f"/pkm:evaluate-knowledge {file_list}",
                     ],
                     timeout=600,
                     capture_output=True,
