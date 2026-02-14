@@ -54,7 +54,7 @@ uv run ai-research-assistant --help
 
 **Schedule:** Daily at 4:00 AM
 
-**Logs:** `~/code/ai-research-assistant/logs/launchd.log`
+**Logs:** `~/code/ai-research-assistant/logs/pipeline.log`
 
 **Commands:**
 ```bash
@@ -72,7 +72,7 @@ launchctl unload ~/Library/LaunchAgents/com.bop.ai-research-assistant.plist
 launchctl load ~/Library/LaunchAgents/com.bop.ai-research-assistant.plist
 
 # View logs
-tail -f ~/code/ai-research-assistant/logs/launchd.log
+tail -f ~/code/ai-research-assistant/logs/pipeline.log
 ```
 
 ### Wake from Sleep
@@ -157,10 +157,48 @@ uv run ai-research-assistant feeds import feeds.opml
 
 ### Monitoring
 
-```bash
-# View logs
-tail -f ~/code/ai-research-assistant/logs/launchd.log
+#### Enhanced Status Commands
 
+```bash
+# Quick status (pending items, last run time)
+uv run ai-research-assistant status
+
+# Show last run with comprehensive report
+uv run ai-research-assistant status --last-run
+
+# Watch current run in real-time (2s updates)
+uv run ai-research-assistant status --watch
+
+# Show run from specific date
+uv run ai-research-assistant status --date 2026-02-14
+```
+
+**Status report includes:**
+- Run timestamps and duration (local timezone)
+- Summary: processed, promoted, discarded, failed counts
+- Item-by-item list with destinations (Knowledge/, Clippings/, Discarded)
+- Timing statistics
+
+#### Log Monitoring
+
+**Single log file:** All output goes to `~/code/ai-research-assistant/logs/pipeline.log`
+
+```bash
+# Watch logs in real-time (shows immediate updates with flush)
+tail -f ~/code/ai-research-assistant/logs/pipeline.log
+
+# View recent entries
+tail -100 ~/code/ai-research-assistant/logs/pipeline.log
+
+# Search for errors
+grep ERROR ~/code/ai-research-assistant/logs/pipeline.log
+```
+
+**Note:** `launchd.log` is no longer used. All logging handled by Python's logging_config module.
+
+#### Database Queries
+
+```bash
 # Check failed items
 uv run ai-research-assistant status --failed
 
@@ -202,7 +240,7 @@ RSS Feed → FeedManager → SkillRunner → /pkm:article → Clippings/Articles
 |---------|------|
 | Repository | `~/code/ai-research-assistant/` |
 | Database | `~/code/ai-research-assistant/data/feeds.db` |
-| Logs | `~/code/ai-research-assistant/logs/launchd.log` |
+| Logs | `~/code/ai-research-assistant/logs/pipeline.log` |
 | Launchd plist | `~/Library/LaunchAgents/com.bop.ai-research-assistant.plist` |
 | Feed config | Managed via CLI (`feeds add/remove`) |
 | Articles output | `Clippings/Articles/` |
@@ -225,7 +263,7 @@ launchctl load ~/Library/LaunchAgents/com.bop.ai-research-assistant.plist
 launchctl start com.bop.ai-research-assistant
 
 # Check logs
-tail -f ~/code/ai-research-assistant/logs/launchd.log
+tail -f ~/code/ai-research-assistant/logs/pipeline.log
 ```
 
 ### Mac not waking at 3:55 AM
@@ -274,7 +312,7 @@ claude --list-skills | grep pkm:
 
 ```bash
 # View recent errors in logs
-grep ERROR ~/code/ai-research-assistant/logs/launchd.log
+grep ERROR ~/code/ai-research-assistant/logs/pipeline.log
 
 # Check failed items
 uv run ai-research-assistant status --failed
@@ -327,7 +365,7 @@ Location: `~/Library/LaunchAgents/com.bop.ai-research-assistant.plist`
     <array>
         <string>/bin/bash</string>
         <string>-c</string>
-        <string>cd ~/code/ai-research-assistant &amp;&amp; /Users/boris.diebold/.local/bin/uv run ai-research-assistant run &gt;&gt; ~/code/ai-research-assistant/logs/launchd.log 2&gt;&amp;1</string>
+        <string>cd ~/code/ai-research-assistant &amp;&amp; /Users/boris.diebold/.local/bin/uv run ai-research-assistant run</string>
     </array>
 
     <key>StartCalendarInterval</key>
@@ -337,12 +375,6 @@ Location: `~/Library/LaunchAgents/com.bop.ai-research-assistant.plist`
         <key>Minute</key>
         <integer>0</integer>
     </dict>
-
-    <key>StandardOutPath</key>
-    <string>/Users/boris.diebold/code/ai-research-assistant/logs/launchd.log</string>
-
-    <key>StandardErrorPath</key>
-    <string>/Users/boris.diebold/code/ai-research-assistant/logs/launchd.log</string>
 
     <key>EnvironmentVariables</key>
     <dict>
@@ -355,6 +387,8 @@ Location: `~/Library/LaunchAgents/com.bop.ai-research-assistant.plist`
 </dict>
 </plist>
 ```
+
+**Note:** All logging is handled by Python's logging_config module writing to `pipeline.log`. No manual redirection or StandardOutPath/StandardErrorPath needed.
 
 ## Related Documentation
 
