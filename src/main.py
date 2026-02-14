@@ -92,8 +92,19 @@ def status(last_run: bool, date: str | None, watch: bool):
                     )
                     processed_count = entries_cursor.fetchone()['count']
 
+                    # Get most recent processed entry for current item
+                    recent_cursor = db.execute(
+                        "SELECT entry_title FROM processed_entries WHERE processed_at >= ? ORDER BY processed_at DESC LIMIT 1",
+                        (current_run['started_at'],)
+                    )
+                    recent_entry = recent_cursor.fetchone()
+                    current_item = recent_entry['entry_title'] if recent_entry else 'Starting...'
+
+                    # Get total items for progress ratio
+                    total_items = current_run['items_fetched']
+
                     # Clear line and show progress
-                    sys.stdout.write(f"\r[{format_timestamp(current_run['started_at'])}] Processing... {processed_count} items completed")
+                    sys.stdout.write(f"\r[{format_timestamp(current_run['started_at'])}] Processing {current_item[:50]}... ({processed_count}/{total_items} items)")
                     sys.stdout.flush()
 
                     prev_count = processed_count

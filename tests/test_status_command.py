@@ -203,8 +203,15 @@ def test_status_watch_with_running_pipeline():
         )
         db.commit()
 
-        # Create a running pipeline
+        # Create a running pipeline with items_fetched set
         run_id = db.record_run_start()
+
+        # Set items_fetched to simulate total items to process
+        db.execute(
+            "UPDATE pipeline_runs SET items_fetched = ? WHERE id = ?",
+            (5, run_id)
+        )
+        db.commit()
 
         # Add some processed entries
         db.mark_processed(
@@ -218,7 +225,7 @@ def test_status_watch_with_running_pipeline():
             entry_guid="guid-2",
             feed_id=1,
             entry_url="https://example.com/article2",
-            entry_title="Test Article 2",
+            entry_title="Test Article 2 - Really Long Title That Should Get Truncated",
             note_path=Path("/vault/Clippings/Articles/article2.md"),
         )
 
@@ -235,8 +242,59 @@ def test_status_watch_with_running_pipeline():
 
                 assert result.exit_code == 0
                 assert "Watching pipeline" in result.output
-                assert "Processing..." in result.output
-                assert "2 items completed" in result.output
+                # Should show current article title (one of the two)
+                assert ("Test Article 1" in result.output or "Test Article 2" in result.output)
+                # Should show "Processing" with article title
+                assert "Processing Test Article" in result.output
+                # Should show progress ratio (2/5 items)
+                assert "(2/5 items)" in result.output
+                assert "Watch stopped" in result.output
+        finally:
+            src.main.get_db = original_get_db
+
+
+def test_status_watch_starting_state():
+    """status --watch should show 'Starting...' when pipeline just started."""
+    from unittest.mock import patch
+    from src.database import Database
+    from src.main import cli
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_path = Path(tmpdir) / "test.db"
+        db = Database(db_path)
+
+        # Create a feed
+        db.execute(
+            "INSERT INTO feeds (url, title, category) VALUES (?, ?, ?)",
+            ("https://example.com/feed", "Test Feed", "articles"),
+        )
+        db.commit()
+
+        # Create a running pipeline with items_fetched but no processed entries yet
+        run_id = db.record_run_start()
+        db.execute(
+            "UPDATE pipeline_runs SET items_fetched = ? WHERE id = ?",
+            (10, run_id)
+        )
+        db.commit()
+
+        # Override get_db to use test database
+        import src.main
+        original_get_db = src.main.get_db
+        src.main.get_db = lambda: db
+
+        try:
+            # Mock time.sleep to stop after first iteration
+            with patch('time.sleep', side_effect=KeyboardInterrupt):
+                runner = CliRunner()
+                result = runner.invoke(cli, ['status', '--watch'])
+
+                assert result.exit_code == 0
+                assert "Watching pipeline" in result.output
+                # Should show "Starting..." when no items processed yet
+                assert "Processing Starting..." in result.output
+                # Should show 0/10 items
+                assert "(0/10 items)" in result.output
                 assert "Watch stopped" in result.output
         finally:
             src.main.get_db = original_get_db
