@@ -418,6 +418,79 @@ def status(last_run: bool, date: str | None, watch: bool):
     click.echo(f"Feeds: {by_category}")
 
 
+@cli.command()
+@click.option('--json', 'output_json', is_flag=True, help='Output as JSON for /morning skill')
+@click.option('--days', '-d', type=int, default=7, help='Number of days to analyze')
+def stats(output_json: bool, days: int):
+    """Show comprehensive pipeline statistics and health dashboard.
+
+    Use --json for machine-readable output (consumed by /morning skill).
+    """
+    from src.config import get_project_dir
+    from src.database import format_timestamp
+    import json as json_module
+
+    db = get_db()
+    log_dir = get_project_dir() / "logs"
+
+    # Collect all metrics using helper functions
+    last_run = db.get_pipeline_run_details()  # From Phase 1
+    trends = _calculate_trends(db, days)
+    performance = _parse_performance(log_dir)
+    health = _calculate_health(db, log_dir)
+    recommendations = _generate_recommendations(db, log_dir, health=health)
+
+    # Build data structure
+    data = {
+        "last_run": last_run,
+        "trends": trends,
+        "performance": performance,
+        "health": health,
+        "recommendations": recommendations
+    }
+
+    if output_json:
+        # JSON output for /morning skill consumption
+        click.echo(json_module.dumps(data, indent=2, default=str))
+    else:
+        # Human-readable terminal output
+        if data["last_run"]:
+            lr = data["last_run"]
+            click.echo(f"Last run: {format_timestamp(lr['completed_at'])}")
+            click.echo(f"  Processed: {lr['items_processed']}, Failed: {lr['items_failed']}")
+            click.echo()
+        else:
+            click.echo("No runs yet\n")
+
+        # Trends
+        click.echo(f"7-day trend: {trends['comparison']}")
+        click.echo(f"  Recent: {trends['last_7_days']['total_processed']} items")
+        click.echo(f"  Previous: {trends['previous_7_days']['total_processed']} items")
+        click.echo()
+
+        # Performance
+        if performance["avg_seconds_per_article"] > 0:
+            click.echo("Performance:")
+            click.echo(f"  Avg: {performance['avg_seconds_per_article']:.0f}s/article")
+            if performance["slowest"]:
+                click.echo(f"  Slowest: {performance['slowest']['title']} ({performance['slowest']['duration']:.0f}s)")
+            click.echo()
+
+        # Health
+        status_emoji = {"healthy": "✅", "warning": "⚠️", "error": "❌"}
+        click.echo(f"Health: {status_emoji.get(health['status'], '?')} {health['status'].capitalize()}")
+        if health["alerts"]:
+            for alert in health["alerts"]:
+                click.echo(f"  {alert}")
+            click.echo()
+
+        # Recommendations
+        if recommendations:
+            click.echo("Recommendations:")
+            for i, rec in enumerate(recommendations, 1):
+                click.echo(f"  {i}. {rec}")
+
+
 # === Feed Management Commands ===
 
 
