@@ -3,6 +3,7 @@ import fcntl
 import logging
 import os
 import subprocess
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -112,6 +113,8 @@ def run_pipeline(db: Database, dry_run: bool = False, limit: int | None = None, 
 
 def _run_pipeline_inner(db: Database, dry_run: bool, limit: int | None, verbose: bool) -> PipelineResult:
     """Inner pipeline logic (called with lock held)."""
+    start_time = time.perf_counter()
+
     feed_manager = FeedManager(db)
     skill_runner = SkillRunner()
 
@@ -158,9 +161,10 @@ def _run_pipeline_inner(db: Database, dry_run: bool, limit: int | None, verbose:
     # Apply limit if specified
     if limit is not None and limit < len(all_entries):
         all_entries = all_entries[:limit]
-        logger.info(f"Found {len(new_entries)} new entries, {len(retry_entries)} retries (limited to {limit})")
+        logger.info(f"Starting run ({len(new_entries)} new entries, {len(retry_entries)} retries, limited to {limit})")
     else:
-        logger.info(f"Found {len(new_entries)} new entries, {len(retry_entries)} retries")
+        logger.info(f"Starting run ({len(new_entries)} new entries" +
+                   (f", {len(retry_entries)} retries)" if retry_entries else ")"))
 
     if dry_run:
         for entry in all_entries:
@@ -294,6 +298,10 @@ def _run_pipeline_inner(db: Database, dry_run: bool, limit: int | None, verbose:
 
     # Send notification
     send_notification(result)
+
+    # Log completion with timing
+    duration = time.perf_counter() - start_time
+    logger.info(f"Run complete ({duration:.1f}s total, {result.processed} processed, {result.failed} failed)")
 
     return result
 
