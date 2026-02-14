@@ -141,3 +141,145 @@ def test_add_to_retry_queue_and_get_candidates():
         candidates = db.get_retry_candidates()
         assert len(candidates) == 1
         assert candidates[0]["entry_guid"] == "guid-456"
+
+
+def test_get_pipeline_run_details_no_runs():
+    """get_pipeline_run_details should return None when no runs exist."""
+    from src.database import Database
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_path = Path(tmpdir) / "test.db"
+        db = Database(db_path)
+
+        result = db.get_pipeline_run_details()
+        assert result is None
+
+
+def test_get_pipeline_run_details_most_recent():
+    """get_pipeline_run_details should return most recent run by default."""
+    from src.database import Database
+    import time
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_path = Path(tmpdir) / "test.db"
+        db = Database(db_path)
+
+        # Create a feed for processed entries
+        db.execute(
+            "INSERT INTO feeds (url, title, category) VALUES (?, ?, ?)",
+            ("https://example.com/feed", "Test Feed", "articles"),
+        )
+        db.commit()
+
+        # Create two runs with time separation to ensure distinct timestamps
+        run_id_1 = db.record_run_start()
+        db.mark_processed(
+            entry_guid="guid-1",
+            feed_id=1,
+            entry_url="https://example.com/article1",
+            entry_title="Article 1",
+            note_path=Path("/vault/Clippings/article1.md"),
+        )
+        db.record_run_complete(run_id_1, processed=1, failed=0)
+
+        # Sleep to ensure second run has different timestamps
+        time.sleep(1)
+
+        run_id_2 = db.record_run_start()
+        db.mark_processed(
+            entry_guid="guid-2",
+            feed_id=1,
+            entry_url="https://example.com/article2",
+            entry_title="Article 2",
+            note_path=Path("/vault/Knowledge/AI/article2.md"),
+        )
+        db.record_run_complete(run_id_2, processed=1, failed=0)
+
+        # Should return most recent run (run_id_2)
+        result = db.get_pipeline_run_details()
+        assert result is not None
+        assert result['id'] == run_id_2
+        assert result['status'] == 'completed'
+        assert result['items_processed'] == 1
+        assert result['items_failed'] == 0
+        assert len(result['entries']) == 1
+        assert result['entries'][0]['entry_title'] == 'Article 2'
+
+
+def test_get_pipeline_run_details_specific_run():
+    """get_pipeline_run_details should return specific run when run_id provided."""
+    from src.database import Database
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_path = Path(tmpdir) / "test.db"
+        db = Database(db_path)
+
+        # Create a feed
+        db.execute(
+            "INSERT INTO feeds (url, title, category) VALUES (?, ?, ?)",
+            ("https://example.com/feed", "Test Feed", "articles"),
+        )
+        db.commit()
+
+        # Create first run
+        run_id_1 = db.record_run_start()
+        db.mark_processed(
+            entry_guid="guid-old",
+            feed_id=1,
+            entry_url="https://example.com/old",
+            entry_title="Old Article",
+            note_path=Path("/vault/Clippings/old.md"),
+        )
+        db.record_run_complete(run_id_1, processed=1, failed=0)
+
+        # Create second run
+        run_id_2 = db.record_run_start()
+        db.record_run_complete(run_id_2, processed=0, failed=0)
+
+        # Request first run specifically
+        result = db.get_pipeline_run_details(run_id=run_id_1)
+        assert result is not None
+        assert result['id'] == run_id_1
+        assert result['items_processed'] == 1
+        assert len(result['entries']) == 1
+        assert result['entries'][0]['entry_title'] == 'Old Article'
+
+
+def test_get_pipeline_run_details_with_failed_items():
+    """get_pipeline_run_details should include failed items from retry queue."""
+    from src.database import Database
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_path = Path(tmpdir) / "test.db"
+        db = Database(db_path)
+
+        # Create a feed
+        db.execute(
+            "INSERT INTO feeds (url, title, category) VALUES (?, ?, ?)",
+            ("https://example.com/feed", "Test Feed", "articles"),
+        )
+        db.commit()
+
+        # Start a run
+        run_id = db.record_run_start()
+
+        # Add a failed item to retry queue during the run
+        db.add_to_retry_queue(
+            entry_guid="guid-failed",
+            feed_id=1,
+            entry_url="https://example.com/failed",
+            entry_title="Failed Article",
+            category="articles",
+            error="Network timeout",
+        )
+
+        # Complete the run
+        db.record_run_complete(run_id, processed=0, failed=1)
+
+        # Get run details
+        result = db.get_pipeline_run_details(run_id=run_id)
+        assert result is not None
+        assert result['items_failed'] == 1
+        assert len(result['failed']) == 1
+        assert result['failed'][0]['entry_title'] == 'Failed Article'
+        assert result['failed'][0]['last_error'] == 'Network timeout'

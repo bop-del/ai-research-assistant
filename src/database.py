@@ -226,3 +226,71 @@ class Database:
         """Remove entry from retry queue (after successful processing)."""
         self.execute("DELETE FROM retry_queue WHERE entry_guid = ?", (entry_guid,))
         self.commit()
+
+    def get_pipeline_run_details(self, run_id: int | None = None) -> dict | None:
+        """Get detailed pipeline run information with processed entries.
+
+        Args:
+            run_id: Specific run ID, or None for most recent run
+
+        Returns:
+            Dict with run metadata and processed entries, or None if no runs found
+        """
+        # Get run metadata
+        if run_id is None:
+            run_cursor = self.execute(
+                "SELECT * FROM pipeline_runs ORDER BY id DESC LIMIT 1"
+            )
+        else:
+            run_cursor = self.execute(
+                "SELECT * FROM pipeline_runs WHERE id = ?", (run_id,)
+            )
+
+        run_row = run_cursor.fetchone()
+        if not run_row:
+            return None
+
+        # Get processed entries for this run
+        # Note: Uses timestamp range since processed_entries doesn't have run_id FK.
+        # In rapid succession runs, entries may be attributed to wrong run due to
+        # timestamp precision. This is acceptable for monitoring purposes.
+        entries_cursor = self.execute(
+            """
+            SELECT
+                entry_title,
+                entry_url,
+                processed_at,
+                note_path
+            FROM processed_entries
+            WHERE processed_at >= ? AND processed_at <= ?
+            ORDER BY processed_at ASC
+            """,
+            (run_row['started_at'], run_row['completed_at'] or datetime.now()),
+        )
+        entries = [dict(row) for row in entries_cursor.fetchall()]
+
+        # Get retry/failed items
+        failed_cursor = self.execute(
+            """
+            SELECT
+                entry_title,
+                entry_url,
+                last_error
+            FROM retry_queue
+            WHERE last_attempt_at >= ? AND last_attempt_at <= ?
+            """,
+            (run_row['started_at'], run_row['completed_at'] or datetime.now()),
+        )
+        failed = [dict(row) for row in failed_cursor.fetchall()]
+
+        return {
+            'id': run_row['id'],
+            'started_at': run_row['started_at'],
+            'completed_at': run_row['completed_at'],
+            'status': run_row['status'],
+            'items_fetched': run_row['items_fetched'],
+            'items_processed': run_row['items_processed'],
+            'items_failed': run_row['items_failed'],
+            'entries': entries,
+            'failed': failed,
+        }
