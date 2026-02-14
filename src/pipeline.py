@@ -272,7 +272,7 @@ def _run_pipeline_inner(db: Database, dry_run: bool, limit: int | None, verbose:
                 env = os.environ.copy()
                 env["CLAUDECODE"] = ""
 
-                result = subprocess.run(
+                subprocess_result = subprocess.run(
                     [
                         "claude",
                         "--plugin-dir",
@@ -290,13 +290,13 @@ def _run_pipeline_inner(db: Database, dry_run: bool, limit: int | None, verbose:
                 )
 
                 # Log the skill's progress output
-                if result.stdout:
-                    for line in result.stdout.strip().split('\n'):
+                if subprocess_result.stdout:
+                    for line in subprocess_result.stdout.strip().split('\n'):
                         if line.strip():
                             logger.info(f"  {line}")
 
-                if result.returncode != 0:
-                    logger.warning(f"  Batch {batch_idx}/{len(batches)} failed: {result.stderr[:200]}")
+                if subprocess_result.returncode != 0:
+                    logger.warning(f"  Batch {batch_idx}/{len(batches)} failed: {subprocess_result.stderr[:200]}")
                 else:
                     logger.info(f"    Batch {batch_idx}/{len(batches)} done ({len(batch)} notes)")
             except subprocess.TimeoutExpired:
