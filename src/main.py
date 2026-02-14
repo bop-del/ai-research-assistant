@@ -1,4 +1,5 @@
 """CLI entry point for content pipeline."""
+from datetime import datetime
 from pathlib import Path
 
 import click
@@ -58,15 +59,86 @@ def run(dry_run: bool, limit: int | None, verbose: bool, force: bool):
 
 
 @cli.command()
-def status():
+@click.option('--last-run', is_flag=True, help='Show detailed report of last pipeline run')
+@click.option('--date', type=str, default=None, help='Show run from specific date (YYYY-MM-DD)')
+@click.option('--watch', is_flag=True, help='Watch current run in real-time (updates every 2s)')
+def status(last_run: bool, date: str | None, watch: bool):
     """Show pipeline status: pending items, retry queue, last run."""
+    from src.database import format_timestamp
+
     db = get_db()
+
+    # Handle --watch flag (not yet implemented)
+    if watch:
+        click.echo("Watch mode not yet implemented - coming in Task 4")
+        return
+
+    # Handle --date flag (not yet implemented)
+    if date:
+        click.echo("Date filtering not yet implemented")
+        return
+
+    # Handle --last-run flag
+    if last_run:
+        run_data = db.get_pipeline_run_details()
+        if not run_data:
+            click.echo("No pipeline runs found")
+            return
+
+        # Header
+        started = format_timestamp(run_data['started_at'])
+        completed = format_timestamp(run_data['completed_at']) if run_data['completed_at'] else 'In progress'
+
+        if run_data['completed_at']:
+            duration = datetime.fromisoformat(run_data['completed_at']) - datetime.fromisoformat(run_data['started_at'])
+            duration_str = f"{int(duration.total_seconds() // 60)}m {int(duration.total_seconds() % 60)}s"
+        else:
+            duration_str = 'Running...'
+
+        click.echo(f"Last Run: {started} - {completed} ({duration_str})")
+        click.echo(f"Status: {run_data['status'].capitalize()}")
+        click.echo()
+
+        # Summary
+        click.echo("Summary:")
+        click.echo(f"  Processed: {run_data['items_processed']} items")
+        click.echo(f"  Failed: {run_data['items_failed']}")
+        click.echo()
+
+        # Items processed
+        if run_data['entries']:
+            click.echo("Items Processed:")
+            for entry in run_data['entries']:
+                processed_time = format_timestamp(entry['processed_at'])
+                # Determine destination from note_path
+                note_path = entry.get('note_path', '')
+                if 'Knowledge/' in note_path:
+                    dest = f"→ {note_path.split('Knowledge/')[1].split('/')[0]}/"
+                elif 'Discarded' in note_path:
+                    dest = "→ Discarded"
+                else:
+                    dest = "→ Clippings/"
+
+                click.echo(f"  ✓ {entry['entry_title']} {dest}")
+            click.echo()
+
+        # Failed items
+        if run_data['failed']:
+            click.echo("Failed Items:")
+            for item in run_data['failed']:
+                click.echo(f"  ✗ {item['entry_title']}")
+                click.echo(f"    Error: {item['last_error']}")
+            click.echo()
+
+        return
+
+    # Original status command behavior (if no flags)
     fm = FeedManager(db)
 
     # Last run info
-    last_run = db.get_last_successful_run()
-    if last_run:
-        click.echo(f"Last successful run: {last_run.strftime('%Y-%m-%d %H:%M')}")
+    last_run_time = db.get_last_successful_run()
+    if last_run_time:
+        click.echo(f"Last successful run: {last_run_time.strftime('%Y-%m-%d %H:%M')}")
     else:
         click.echo("No previous runs")
 
