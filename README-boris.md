@@ -196,6 +196,28 @@ grep ERROR ~/code/ai-research-assistant/logs/pipeline.log
 
 **Note:** `launchd.log` is no longer used. All logging handled by Python's logging_config module.
 
+#### Stats Dashboard
+
+```bash
+# Comprehensive statistics dashboard
+uv run ai-research-assistant stats
+
+# JSON output (for /morning skill)
+uv run ai-research-assistant stats --json
+
+# Analyze last 14 days
+uv run ai-research-assistant stats --days 14
+```
+
+**Dashboard shows:**
+- Last run summary (processed, failed counts)
+- 7-day trends with week-over-week comparison
+- Performance metrics (avg time, slowest article)
+- Health status with alerts
+- Actionable recommendations (max 5)
+
+**Integrated with /morning:** RSS pipeline section automatically added to daily note.
+
 #### Database Queries
 
 ```bash
