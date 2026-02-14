@@ -1,4 +1,5 @@
 """CLI entry point for content pipeline."""
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -12,6 +13,198 @@ def get_db() -> Database:
     """Get database instance."""
     db_path = Path(__file__).parent.parent / "data" / "pipeline.db"
     return Database(db_path)
+
+
+def _calculate_trends(db: Database, days: int = 7) -> dict:
+    """Calculate trends comparing last N days to previous N days.
+
+    Returns dict with recent stats, previous stats, and comparison string.
+    """
+    # Last N days
+    cursor_recent = db.execute(
+        """SELECT SUM(items_processed) as total, SUM(items_failed) as failed
+           FROM pipeline_runs
+           WHERE status = 'completed'
+             AND completed_at >= datetime('now', ? || ' days')""",
+        (f'-{days}',)
+    )
+    recent = cursor_recent.fetchone()
+
+    # Previous N days (for comparison)
+    cursor_previous = db.execute(
+        """SELECT SUM(items_processed) as total, SUM(items_failed) as failed
+           FROM pipeline_runs
+           WHERE status = 'completed'
+             AND completed_at >= datetime('now', ? || ' days')
+             AND completed_at < datetime('now', ? || ' days')""",
+        (f'-{days * 2}', f'-{days}')
+    )
+    previous = cursor_previous.fetchone()
+
+    recent_total = recent["total"] or 0
+    previous_total = previous["total"] or 0
+
+    # Calculate comparison string
+    if previous_total == 0:
+        comparison = "N/A (no previous data)"
+    else:
+        pct_change = ((recent_total - previous_total) / previous_total) * 100
+        if abs(pct_change) < 5:
+            comparison = "→ stable"
+        elif pct_change > 0:
+            comparison = f"↑ {pct_change:.0f}% more"
+        else:
+            comparison = f"↓ {abs(pct_change):.0f}% less"
+
+    return {
+        "last_7_days": {
+            "total_processed": recent_total,
+            "total_failed": recent["failed"] or 0,
+            "avg_per_day": recent_total / days if recent_total > 0 else 0
+        },
+        "previous_7_days": {
+            "total_processed": previous_total,
+            "total_failed": previous["failed"] or 0
+        },
+        "comparison": comparison
+    }
+
+
+def _parse_performance(log_dir: Path) -> dict:
+    """Parse performance metrics from pipeline.log.
+
+    Returns dict with avg time, slowest/fastest articles (or None if no data).
+    """
+    log_file = log_dir / "pipeline.log"
+
+    if not log_file.exists():
+        return {
+            "avg_seconds_per_article": 0,
+            "slowest": None,
+            "fastest": None
+        }
+
+    content = log_file.read_text()
+
+    # Parse per-article timing: "✓ Created: filename.md (XX.Xs)"
+    pattern = r'✓ Created: (.+?\.md) \((\d+\.\d+)s\)'
+    matches = re.findall(pattern, content)
+
+    if not matches:
+        return {
+            "avg_seconds_per_article": 0,
+            "slowest": None,
+            "fastest": None
+        }
+
+    # Extract and sort by duration
+    articles = [(title, float(duration)) for title, duration in matches]
+    articles.sort(key=lambda x: x[1])
+
+    avg_time = sum(t[1] for t in articles) / len(articles)
+
+    return {
+        "avg_seconds_per_article": avg_time,
+        "slowest": {
+            "title": articles[-1][0],
+            "duration": articles[-1][1]
+        },
+        "fastest": {
+            "title": articles[0][0],
+            "duration": articles[0][1]
+        }
+    }
+
+
+def _calculate_health(db: Database, log_dir: Path) -> dict:
+    """Check pipeline health and generate alerts.
+
+    Returns dict with overall status and list of alert strings.
+    """
+    alerts = []
+
+    # Use Phase 1's get_pipeline_run_details()
+    last_run = db.get_pipeline_run_details()
+
+    if not last_run:
+        return {
+            "status": "warning",
+            "alerts": ["No pipeline runs yet"]
+        }
+
+    # Check last run time
+    last_run_time = datetime.fromisoformat(last_run["completed_at"])
+    hours_since = (datetime.now() - last_run_time).total_seconds() / 3600
+
+    if hours_since > 48:
+        alerts.append("⚠️ No successful run in 48 hours")
+    elif hours_since > 24:
+        alerts.append("⚠️ No successful run in 24 hours")
+
+    # Check failure rate
+    total_items = last_run["items_processed"] + last_run["items_failed"]
+    if total_items > 0:
+        failure_rate = last_run["items_failed"] / total_items
+        if failure_rate > 0.25:
+            alerts.append(f"❌ High failure rate: {failure_rate:.0%}")
+        elif failure_rate > 0.10:
+            alerts.append(f"⚠️ Elevated failure rate: {failure_rate:.0%}")
+
+    # Check processing speed
+    perf = _parse_performance(log_dir)
+    if perf["avg_seconds_per_article"] > 120:
+        alerts.append(f"❌ Very slow processing: {perf['avg_seconds_per_article']:.0f}s avg")
+    elif perf["avg_seconds_per_article"] > 90:
+        alerts.append(f"⚠️ Slow processing: {perf['avg_seconds_per_article']:.0f}s avg")
+
+    # Determine overall status
+    if any("❌" in alert for alert in alerts):
+        status = "error"
+    elif any("⚠️" in alert for alert in alerts):
+        status = "warning"
+    else:
+        status = "healthy"
+
+    return {
+        "status": status,
+        "alerts": alerts
+    }
+
+
+def _generate_recommendations(db: Database, log_dir: Path) -> list[str]:
+    """Generate actionable recommendations based on metrics.
+
+    Returns list of recommendation strings (max 5).
+    """
+    recommendations = []
+
+    # Check performance
+    perf = _parse_performance(log_dir)
+    if perf["avg_seconds_per_article"] > 90:
+        recommendations.append(
+            f"Consider feed prioritization — {perf['avg_seconds_per_article']:.0f}s avg processing time"
+        )
+
+    if perf["slowest"] and perf["slowest"]["duration"] > 120:
+        title = perf["slowest"]["title"]
+        duration = perf["slowest"]["duration"]
+        recommendations.append(
+            f"Investigate slow feed: {title} took {duration:.0f}s"
+        )
+
+    # Check health for issues
+    health = _calculate_health(db, log_dir)
+    if any("48 hours" in alert for alert in health["alerts"]):
+        recommendations.append(
+            "Verify launchd job: launchctl list | grep ai-research-assistant"
+        )
+    elif any("24 hours" in alert for alert in health["alerts"]):
+        recommendations.append(
+            "Check logs for recent run issues"
+        )
+
+    # Limit to top 5
+    return recommendations[:5]
 
 
 @click.group()
