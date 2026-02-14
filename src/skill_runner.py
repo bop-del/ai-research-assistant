@@ -1,12 +1,26 @@
 """Claude Code skill invocation."""
+import logging
 import os
 import re
 import subprocess
+import time
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 
 from src.config import get_folder, get_project_dir, get_skills_path, get_vault_path, load_config
 from src.models import Entry
+
+
+@contextmanager
+def timer(operation_name: str, logger: logging.Logger):
+    """Context manager to time operations and log duration."""
+    start = time.perf_counter()
+    try:
+        yield
+    finally:
+        duration = time.perf_counter() - start
+        logger.debug(f"{operation_name} took {duration:.1f}s")
 
 
 # Patterns indicating content that will never be extractable (no point retrying)
@@ -43,6 +57,7 @@ class SkillRunner:
         self._vault_path = get_vault_path(self._config)
         self._skills_path = get_skills_path()
         self._mcp_config_path = get_project_dir() / "config" / "mcp-minimal.json"
+        self.logger = logging.getLogger(__name__)
         self._skill_config = {
             "articles": {
                 "skill": "article",
@@ -86,11 +101,15 @@ class SkillRunner:
         timeout = config["timeout"]
         output_folder = config["output_folder"]
 
+        self.logger.info(f"Processing: {entry.title}")
+        start_time = time.perf_counter()
+
         try:
             # Allow nested Claude sessions by unsetting CLAUDECODE env var
             env = os.environ.copy()
             env["CLAUDECODE"] = ""
 
+            self.logger.debug(f"Invoking /pkm:{skill_name} for {entry.url}")
             result = subprocess.run(
                 [
                     "claude",
@@ -110,6 +129,8 @@ class SkillRunner:
                 env=env,
             )
         except subprocess.TimeoutExpired:
+            duration = time.perf_counter() - start_time
+            self.logger.error(f"  ✗ Skill timed out after {timeout}s")
             return SkillResult(
                 success=False,
                 note_path=None,
@@ -118,6 +139,8 @@ class SkillRunner:
                 stderr="",
             )
         except FileNotFoundError:
+            duration = time.perf_counter() - start_time
+            self.logger.error(f"  ✗ Claude CLI not found in PATH")
             return SkillResult(
                 success=False,
                 note_path=None,
@@ -126,9 +149,12 @@ class SkillRunner:
                 stderr="",
             )
 
+        duration = time.perf_counter() - start_time
+
         if result.returncode != 0:
             # Error might be in stdout or stderr depending on the CLI
             error_output = result.stderr.strip() or result.stdout.strip()
+            self.logger.error(f"  ✗ Skill failed ({duration:.1f}s): {error_output[:200]}")
             return SkillResult(
                 success=False,
                 note_path=None,
@@ -149,6 +175,7 @@ class SkillRunner:
                 if is_permanent
                 else "Skill completed but no note path found in output"
             )
+            self.logger.warning(f"  ✗ Skill completed but no note path found ({duration:.1f}s)")
             return SkillResult(
                 success=False,
                 note_path=None,
@@ -159,6 +186,7 @@ class SkillRunner:
             )
 
         if not note_path.exists():
+            self.logger.warning(f"  ✗ Note path not found: {note_path} ({duration:.1f}s)")
             return SkillResult(
                 success=False,
                 note_path=None,
@@ -167,6 +195,7 @@ class SkillRunner:
                 stderr=result.stderr,
             )
 
+        self.logger.info(f"  ✓ Created: {note_path.name} ({duration:.1f}s)")
         return SkillResult(
             success=True,
             note_path=note_path,
