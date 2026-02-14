@@ -93,6 +93,10 @@ class SkillRunner:
             result = subprocess.run(
                 [
                     "claude",
+                    "--plugin-dir",
+                    str(self._vault_path / "Claude/skills-pkm"),
+                    "--plugin-dir",
+                    str(self._vault_path / "Claude/skills-cto"),
                     "--mcp-config",
                     str(self._mcp_config_path),
                     "--print",

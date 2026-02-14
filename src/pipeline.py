@@ -271,6 +271,10 @@ def _run_pipeline_inner(db: Database, dry_run: bool, limit: int | None, verbose:
                 subprocess.run(
                     [
                         "claude",
+                        "--plugin-dir",
+                        str(vault_path / "Claude/skills-pkm"),
+                        "--plugin-dir",
+                        str(vault_path / "Claude/skills-cto"),
                         "--print",
                         "--dangerously-skip-permissions",
                         f"/pkm:evaluate-knowledge {file_list}",
