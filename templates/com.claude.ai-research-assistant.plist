@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.claude.ai-research-assistant</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/boris.diebold/code/ai-research-assistant/scripts/run.sh</string>
+    </array>
+
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>6</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/Users/boris.diebold/.claude/logs/ai-research-assistant.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/boris.diebold/.claude/logs/ai-research-assistant.log</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin</string>
+        <key>HOME</key>
+        <string>/Users/boris.diebold</string>
+    </dict>
+</dict>
+</plist>

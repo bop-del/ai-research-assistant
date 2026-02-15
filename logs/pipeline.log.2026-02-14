@@ -1,0 +1,182 @@
+2026-02-14 16:17:22.599 [INFO] src.main: ai-research-assistant starting
+2026-02-14 16:17:22.961 [INFO] src.pipeline: Found 25 new entries, 0 retries (limited to 1)
+2026-02-14 16:17:22.961 [INFO] src.pipeline: [DRY RUN] Would process: Covering electricity price increases from our data centers (articles)
+2026-02-14 16:17:38.993 [INFO] src.main: ai-research-assistant starting
+2026-02-14 16:17:39.374 [INFO] src.pipeline: Found 25 new entries, 0 retries (limited to 1)
+2026-02-14 16:17:39.374 [INFO] src.pipeline: [DRY RUN] Would process: Covering electricity price increases from our data centers (articles)
+2026-02-14 16:18:03.584 [INFO] src.main: ai-research-assistant starting
+2026-02-14 16:18:04.172 [INFO] src.pipeline: Found 25 new entries, 0 retries (limited to 1)
+2026-02-14 16:18:04.172 [INFO] src.pipeline: [DRY RUN] Would process: Covering electricity price increases from our data centers (articles)
+2026-02-14 16:32:51.198 [INFO] src.main: ai-research-assistant starting
+2026-02-14 16:32:51.632 [INFO] src.pipeline: Starting run (25 new entries, 0 retries, limited to 5)
+2026-02-14 16:32:51.632 [INFO] src.pipeline: [1/5] Processing: Covering electricity price increases from our data centers
+2026-02-14 16:32:51.632 [INFO] src.skill_runner: Processing: Covering electricity price increases from our data centers
+2026-02-14 16:32:51.632 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/12/covering-electricity-price-increases/#atom-everything
+2026-02-14 16:33:52.935 [INFO] src.skill_runner:   ✓ Created: Covering electricity price increases from our data centers.md (61.3s)
+2026-02-14 16:33:52.939 [INFO] src.pipeline:     ✓ Created: Covering electricity price increases from our data centers.md
+2026-02-14 16:33:52.939 [INFO] src.pipeline: [2/5] Processing: Gemini 3 Deep Think
+2026-02-14 16:33:52.939 [INFO] src.skill_runner: Processing: Gemini 3 Deep Think
+2026-02-14 16:33:52.940 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/12/gemini-3-deep-think/#atom-everything
+2026-02-14 16:34:54.979 [INFO] src.skill_runner:   ✓ Created: Gemini 3 Deep Think.md (62.0s)
+2026-02-14 16:34:54.985 [INFO] src.pipeline:     ✓ Created: Gemini 3 Deep Think.md
+2026-02-14 16:34:54.985 [INFO] src.pipeline: [3/5] Processing: An AI Agent Published a Hit Piece on Me
+2026-02-14 16:34:54.985 [INFO] src.skill_runner: Processing: An AI Agent Published a Hit Piece on Me
+2026-02-14 16:34:54.985 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/12/an-ai-agent-published-a-hit-piece-on-me/#atom-everything
+2026-02-14 16:35:53.532 [INFO] src.skill_runner:   ✓ Created: An AI Agent Published a Hit Piece on Me.md (58.5s)
+2026-02-14 16:35:53.546 [INFO] src.pipeline:     ✓ Created: An AI Agent Published a Hit Piece on Me.md
+2026-02-14 16:35:53.546 [INFO] src.pipeline: [4/5] Processing: Supervisor, not overseer
+2026-02-14 16:35:53.546 [INFO] src.skill_runner: Processing: Supervisor, not overseer
+2026-02-14 16:35:53.546 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/12/supervisor/#atom-everything
+2026-02-14 16:36:32.517 [INFO] src.skill_runner:   ✓ Created: Supervisor, not overseer.md (39.0s)
+2026-02-14 16:36:32.523 [INFO] src.pipeline:     ✓ Created: Supervisor, not overseer.md
+2026-02-14 16:36:32.524 [INFO] src.pipeline: [5/5] Processing: Quoting Andrew Deck for Niemen Lab
+2026-02-14 16:36:32.524 [INFO] src.skill_runner: Processing: Quoting Andrew Deck for Niemen Lab
+2026-02-14 16:36:32.524 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/11/manosphere-report/#atom-everything
+2026-02-14 16:37:53.096 [INFO] src.skill_runner:   ✓ Created: How The New York Times Uses a Custom AI Tool to Track the Manosphere.md (80.6s)
+2026-02-14 16:37:53.101 [INFO] src.pipeline:     ✓ Created: How The New York Times Uses a Custom AI Tool to Track the Manosphere.md
+2026-02-14 16:37:53.104 [INFO] src.pipeline: Running /evaluate-knowledge on 5 new notes (1 batch of up to 6)
+2026-02-14 16:41:30.607 [INFO] src.pipeline:   Batch complete: **2 promoted** to Knowledge/, **3 discarded** (5 notes total)
+2026-02-14 16:41:30.608 [INFO] src.pipeline:   | # | Note | Result |
+2026-02-14 16:41:30.609 [INFO] src.pipeline:   |---|------|--------|
+2026-02-14 16:41:30.609 [INFO] src.pipeline:   | 1 | Covering electricity price increases from our data centers | Discarded (energy policy, no actionable CTO depth) |
+2026-02-14 16:41:30.609 [INFO] src.pipeline:   | 2 | Gemini 3 Deep Think | Discarded (SVG benchmark demo, no actionable depth) |
+2026-02-14 16:41:30.609 [INFO] src.pipeline:   | 3 | An AI Agent Published a Hit Piece on Me | **Promoted to Knowledge/Security/** |
+2026-02-14 16:41:30.609 [INFO] src.pipeline:   | 4 | Supervisor, not overseer | Discarded (brief terminology correction) |
+2026-02-14 16:41:30.609 [INFO] src.pipeline:   | 5 | How The New York Times Uses a Custom AI Tool to Track the Manosphere | **Promoted to Knowledge/AI-Engineering/** |
+2026-02-14 16:41:30.609 [INFO] src.pipeline:     Batch 1/1 done (5 notes)
+2026-02-14 16:45:55.534 [INFO] src.main: ai-research-assistant starting
+2026-02-14 16:45:55.987 [INFO] src.pipeline: Starting run (20 new entries, 0 retries, limited to 5)
+2026-02-14 16:45:55.987 [INFO] src.pipeline: [1/5] Processing: Skills in OpenAI API
+2026-02-14 16:45:55.987 [INFO] src.skill_runner: Processing: Skills in OpenAI API
+2026-02-14 16:45:55.988 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/11/skills-in-openai-api/#atom-everything
+2026-02-14 16:46:59.415 [INFO] src.skill_runner:   ✓ Created: Skills in OpenAI API.md (63.4s)
+2026-02-14 16:46:59.420 [INFO] src.pipeline:     ✓ Created: Skills in OpenAI API.md
+2026-02-14 16:46:59.420 [INFO] src.pipeline: [2/5] Processing: GLM-5: From Vibe Coding to Agentic Engineering
+2026-02-14 16:46:59.420 [INFO] src.skill_runner: Processing: GLM-5: From Vibe Coding to Agentic Engineering
+2026-02-14 16:46:59.420 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/11/glm-5/#atom-everything
+2026-02-14 16:48:40.928 [INFO] src.skill_runner:   ✓ Created: GLM-5 From Vibe Coding to Agentic Engineering.md (101.5s)
+2026-02-14 16:48:40.958 [INFO] src.pipeline:     ✓ Created: GLM-5 From Vibe Coding to Agentic Engineering.md
+2026-02-14 16:48:40.958 [INFO] src.pipeline: [3/5] Processing: cysqlite - a new sqlite driver
+2026-02-14 16:48:40.958 [INFO] src.skill_runner: Processing: cysqlite - a new sqlite driver
+2026-02-14 16:48:40.958 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/11/cysqlite/#atom-everything
+2026-02-14 16:50:23.645 [INFO] src.skill_runner:   ✓ Created: cysqlite - a new sqlite driver.md (102.7s)
+2026-02-14 16:50:23.650 [INFO] src.pipeline:     ✓ Created: cysqlite - a new sqlite driver.md
+2026-02-14 16:50:23.650 [INFO] src.pipeline: [4/5] Processing: Introducing Showboat and Rodney, so agents can demo what they’ve built
+2026-02-14 16:50:23.650 [INFO] src.skill_runner: Processing: Introducing Showboat and Rodney, so agents can demo what they’ve built
+2026-02-14 16:50:23.650 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/10/showboat-and-rodney/#atom-everything
+2026-02-14 16:51:29.731 [INFO] src.skill_runner:   ✓ Created: Introducing Showboat and Rodney so agents can demo what theyve built.md (66.1s)
+2026-02-14 16:51:29.741 [INFO] src.pipeline:     ✓ Created: Introducing Showboat and Rodney so agents can demo what theyve built.md
+2026-02-14 16:51:29.741 [INFO] src.pipeline: [5/5] Processing: Structured Context Engineering for File-Native Agentic Systems
+2026-02-14 16:51:29.741 [INFO] src.skill_runner: Processing: Structured Context Engineering for File-Native Agentic Systems
+2026-02-14 16:51:29.741 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/9/structured-context-engineering-for-file-native-agentic-systems/#atom-everything
+2026-02-14 16:53:17.365 [INFO] src.skill_runner:   ✓ Created: Structured Context Engineering for File-Native Agentic Systems.md (107.6s)
+2026-02-14 16:53:17.370 [INFO] src.pipeline:     ✓ Created: Structured Context Engineering for File-Native Agentic Systems.md
+2026-02-14 16:53:17.371 [INFO] src.pipeline: Running /evaluate-knowledge on 5 new notes (1 batch of up to 6)
+2026-02-14 16:57:19.928 [INFO] src.pipeline:   Batch complete: **3 promoted** to Knowledge/, **1 discarded**, **1 skipped** (duplicate)
+2026-02-14 16:57:19.929 [INFO] src.pipeline:   | # | Note | Result |
+2026-02-14 16:57:19.929 [INFO] src.pipeline:   |---|------|--------|
+2026-02-14 16:57:19.929 [INFO] src.pipeline:   | 1 | Skills in OpenAI API | → Promoted to Knowledge/AI-Engineering/ |
+2026-02-14 16:57:19.929 [INFO] src.pipeline:   | 2 | GLM-5 From Vibe Coding to Agentic Engineering | → Promoted to Knowledge/AI-Strategy/ |
+2026-02-14 16:57:19.929 [INFO] src.pipeline:   | 3 | cysqlite - a new sqlite driver | → Discarded (niche SQLite driver, no actionable CTO/personal depth) |
+2026-02-14 16:57:19.929 [INFO] src.pipeline:   | 4 | Introducing Showboat and Rodney | → Skipped (already evaluated and in Knowledge/AI-Engineering/) |
+2026-02-14 16:57:19.929 [INFO] src.pipeline:   | 5 | Structured Context Engineering for File-Native Agentic Systems | → Promoted to Knowledge/AI-Engineering/ |
+2026-02-14 16:57:19.929 [INFO] src.pipeline:   **Key new patterns added to evaluation log:**
+2026-02-14 16:57:19.929 [INFO] src.pipeline:   - **Context Engineering & Prompt Design** — format familiarity > format efficiency
+2026-02-14 16:57:19.929 [INFO] src.pipeline:   - **AI Industry Vocabulary & Framing** — "Agentic Engineering", "Workslop", E-shaped careers
+2026-02-14 16:57:19.929 [INFO] src.pipeline:     Batch 1/1 done (5 notes)
+2026-02-14 16:57:20.252 [INFO] src.pipeline: Run complete (684.7s total, 5 processed, 0 failed)
+2026-02-14 16:57:33.044 [INFO] src.main: ai-research-assistant starting
+2026-02-14 16:57:33.834 [INFO] src.pipeline: Starting run (15 new entries)
+2026-02-14 16:57:33.834 [INFO] src.skill_runner: Processing: AI Doesn’t Reduce Work—It Intensifies It
+2026-02-14 16:57:33.834 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/9/ai-intensifies-work/#atom-everything
+2026-02-14 16:58:34.681 [INFO] src.skill_runner:   ✓ Created: AI Doesnt Reduce Work It Intensifies It.md (60.8s)
+2026-02-14 16:58:34.758 [INFO] src.skill_runner: Processing: Kākāpō mug by Karen James
+2026-02-14 16:58:34.760 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/8/kakapo-mug/#atom-everything
+2026-02-14 16:59:06.722 [INFO] src.skill_runner:   ✓ Created: Kakapo Mug by Karen James.md (32.0s)
+2026-02-14 16:59:06.728 [INFO] src.skill_runner: Processing: Quoting Thomas Ptacek
+2026-02-14 16:59:06.728 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/8/thomas-ptacek/#atom-everything
+2026-02-14 17:00:08.423 [INFO] src.skill_runner:   ✓ Created: A Quote from Thomas Ptacek on LLMs and Vulnerability Research.md (61.7s)
+2026-02-14 17:00:08.429 [INFO] src.skill_runner: Processing: Vouch
+2026-02-14 17:00:08.429 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/7/vouch/#atom-everything
+2026-02-14 17:01:17.360 [INFO] src.skill_runner:   ✓ Created: Vouch.md (68.9s)
+2026-02-14 17:01:17.368 [INFO] src.skill_runner: Processing: Claude: Speed up responses with fast mode
+2026-02-14 17:01:17.368 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/7/claude-fast-mode/#atom-everything
+2026-02-14 17:01:35.184 [INFO] src.main: ai-research-assistant starting
+2026-02-14 17:01:51.708 [INFO] src.main: ai-research-assistant starting
+2026-02-14 17:01:51.938 [INFO] src.pipeline: Starting run (11 new entries, 0 retries, limited to 10)
+2026-02-14 17:01:51.938 [INFO] src.pipeline: [1/10] Processing: Claude: Speed up responses with fast mode
+2026-02-14 17:01:51.938 [INFO] src.skill_runner: Processing: Claude: Speed up responses with fast mode
+2026-02-14 17:01:51.939 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/7/claude-fast-mode/#atom-everything
+2026-02-14 17:02:40.291 [INFO] src.skill_runner:   ✓ Created: Claude Speed up responses with fast mode.md (48.3s)
+2026-02-14 17:02:40.299 [INFO] src.pipeline:     ✓ Created: Claude Speed up responses with fast mode.md
+2026-02-14 17:02:40.299 [INFO] src.pipeline: [2/10] Processing: Quoting David Crawshaw
+2026-02-14 17:02:40.299 [INFO] src.skill_runner: Processing: Quoting David Crawshaw
+2026-02-14 17:02:40.299 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/7/david-crawshaw/#atom-everything
+2026-02-14 17:04:26.965 [INFO] src.skill_runner:   ✓ Created: Eight More Months of Agents - David Crawshaw.md (106.7s)
+2026-02-14 17:04:26.977 [INFO] src.pipeline:     ✓ Created: Eight More Months of Agents - David Crawshaw.md
+2026-02-14 17:04:26.977 [INFO] src.pipeline: [3/10] Processing: How StrongDM's AI team build serious software without even looking at the code
+2026-02-14 17:04:26.977 [INFO] src.skill_runner: Processing: How StrongDM's AI team build serious software without even looking at the code
+2026-02-14 17:04:26.977 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/7/software-factory/#atom-everything
+2026-02-14 17:05:25.109 [INFO] src.skill_runner:   ✓ Created: How StrongDMs AI team build serious software without even looking at the code.md (58.1s)
+2026-02-14 17:05:25.111 [INFO] src.pipeline:     ✓ Created: How StrongDMs AI team build serious software without even looking at the code.md
+2026-02-14 17:05:25.112 [INFO] src.pipeline: [4/10] Processing: Quoting Tom Dale
+2026-02-14 17:05:25.112 [INFO] src.skill_runner: Processing: Quoting Tom Dale
+2026-02-14 17:05:25.112 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/6/tom-dale/#atom-everything
+2026-02-14 17:39:54.826 [INFO] src.main: ai-research-assistant starting
+2026-02-14 17:39:55.113 [INFO] src.pipeline: Starting run (8 new entries, 0 retries, limited to 3)
+2026-02-14 17:39:55.113 [INFO] src.skill_runner: Processing: Quoting Tom Dale
+2026-02-14 17:39:55.113 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/6/tom-dale/#atom-everything
+2026-02-14 17:40:17.068 [INFO] src.skill_runner:   ✓ Created: A Quote from Tom Dale on Software Engineers Mental Health Crisis.md (22.0s)
+2026-02-14 17:40:17.071 [INFO] src.skill_runner: Processing: Running Pydantic's Monty Rust sandboxed Python subset in WebAssembly
+2026-02-14 17:40:17.071 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/6/pydantic-monty/#atom-everything
+2026-02-14 17:41:19.127 [INFO] src.skill_runner:   ✓ Created: Running Pydantics Monty Rust sandboxed Python subset in WebAssembly.md (62.1s)
+2026-02-14 17:41:19.133 [INFO] src.skill_runner: Processing: An Update on Heroku
+2026-02-14 17:41:19.134 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/6/an-update-on-heroku/#atom-everything
+2026-02-14 17:42:17.632 [INFO] src.skill_runner:   ✓ Created: An Update on Heroku.md (58.5s)
+2026-02-14 17:42:17.654 [INFO] src.pipeline: Running /evaluate-knowledge on 3 new notes (1 batch of up to 6)
+2026-02-14 17:42:30.216 [INFO] src.pipeline:   You've hit your limit · resets 6pm (Europe/Berlin)
+2026-02-14 17:42:30.218 [WARNING] src.pipeline:   Batch 1/1 failed: 
+2026-02-14 17:42:30.521 [INFO] src.pipeline: Run complete (155.7s total, 3 processed, 0 failed)
+2026-02-14 19:24:13.053 [INFO] src.main: ai-research-assistant starting
+2026-02-14 19:24:13.341 [INFO] src.pipeline: Starting run (5 new entries, 0 retries, limited to 2)
+2026-02-14 19:24:13.341 [INFO] src.skill_runner: Processing: Quoting Karel D'Oosterlinck
+2026-02-14 19:24:13.342 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/6/karel-doosterlinck/#atom-everything
+2026-02-14 19:25:10.298 [INFO] src.skill_runner:   ✓ Created: A quote from Karel DOosterlinck.md (57.0s)
+2026-02-14 19:25:10.302 [INFO] src.skill_runner: Processing: Mitchell Hashimoto: My AI Adoption Journey
+2026-02-14 19:25:10.303 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/5/ai-adoption-journey/#atom-everything
+2026-02-14 19:25:58.885 [INFO] src.skill_runner:   ✓ Created: Mitchell Hashimoto - My AI Adoption Journey.md (48.6s)
+2026-02-14 19:25:58.888 [INFO] src.pipeline: Running /evaluate-knowledge on 2 new notes (1 batch of up to 6)
+2026-02-14 19:28:01.325 [INFO] src.pipeline:   Batch complete: 2 promoted, 0 discarded
+2026-02-14 19:28:01.326 [INFO] src.pipeline:   | # | Note | Time | Outcome |
+2026-02-14 19:28:01.326 [INFO] src.pipeline:   |---|------|------|---------|
+2026-02-14 19:28:01.326 [INFO] src.pipeline:   | 1/2 | A quote from Karel D'Oosterlinck | — | Promoted to Knowledge/AI-Engineering/ |
+2026-02-14 19:28:01.326 [INFO] src.pipeline:   | 2/2 | Mitchell Hashimoto - My AI Adoption Journey | — | Promoted to Knowledge/AI-Acceleration/ |
+2026-02-14 19:28:01.326 [INFO] src.pipeline:   **Summary:**
+2026-02-14 19:28:01.326 [INFO] src.pipeline:   - **Karel D'Oosterlinck** — Tagged `topic/ai-engineering`, `topic/ai-acceleration`. Key insight: AI as research due diligence agent across Slack/code/discussions with $10K quantified ROI.
+2026-02-14 19:28:01.326 [INFO] src.pipeline:   - **Mitchell Hashimoto** — Tagged `topic/ai-acceleration`, `topic/ai-engineering`, `topic/leadership`. Key insight: Three-step adoption framework (reproduce → experiment → delegate) with end-of-day agent ritual.
+2026-02-14 19:28:01.326 [INFO] src.pipeline:   Both notes connect to existing patterns in the evaluation log (AI-Native Development & Company-Wide AI Adoption). Daily note updated with takeaways and actions.
+2026-02-14 19:28:01.326 [INFO] src.pipeline:     Batch 1/1 done (2 notes)
+2026-02-14 19:28:01.689 [INFO] src.pipeline: Run complete (228.6s total, 2 processed, 0 failed)
+2026-02-14 19:36:39.073 [INFO] src.main: ai-research-assistant starting
+2026-02-14 19:36:39.443 [INFO] src.pipeline: Starting run (3 new entries)
+2026-02-14 19:36:39.443 [INFO] src.skill_runner: Processing: Opus 4.6 and Codex 5.3
+2026-02-14 19:36:39.443 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/5/two-new-models/#atom-everything
+2026-02-14 19:37:39.934 [INFO] src.skill_runner:   ✓ Created: Opus 4.6 and Codex 5.3.md (60.5s)
+2026-02-14 19:37:39.938 [INFO] src.skill_runner: Processing: Spotlighting The World Factbook as We Bid a Fond Farewell
+2026-02-14 19:37:39.938 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/5/the-world-factbook/#atom-everything
+2026-02-14 19:38:32.826 [INFO] src.skill_runner:   ✓ Created: Spotlighting The World Factbook as We Bid a Fond Farewell.md (52.9s)
+2026-02-14 19:38:32.830 [INFO] src.skill_runner: Processing: Voxtral transcribes at the speed of sound
+2026-02-14 19:38:32.831 [DEBUG] src.skill_runner: Invoking /pkm:article for https://simonwillison.net/2026/Feb/4/voxtral-2/#atom-everything
+2026-02-14 19:39:41.394 [INFO] src.skill_runner:   ✓ Created: Voxtral transcribes at the speed of sound.md (68.6s)
+2026-02-14 19:39:41.400 [INFO] src.pipeline: Running /evaluate-knowledge on 3 new notes (1 batch of up to 6)
+2026-02-14 19:42:19.100 [INFO] src.pipeline:   Batch complete: **2 promoted** to Knowledge/, **1 discarded**
+2026-02-14 19:42:19.101 [INFO] src.pipeline:   | # | Note | Outcome |
+2026-02-14 19:42:19.101 [INFO] src.pipeline:   |---|------|---------|
+2026-02-14 19:42:19.101 [INFO] src.pipeline:   | 1 | Opus 4.6 and Codex 5.3 | Promoted to Knowledge/AI-Strategy/ |
+2026-02-14 19:42:19.101 [INFO] src.pipeline:   | 2 | Spotlighting The World Factbook | Discarded (tangential — digital preservation story, no actionable CTO/personal depth) |
+2026-02-14 19:42:19.101 [INFO] src.pipeline:   | 3 | Voxtral transcribes at the speed of sound | Promoted to Knowledge/AI-Engineering/ |
+2026-02-14 19:42:19.101 [INFO] src.pipeline:     Batch 1/1 done (3 notes)
+2026-02-14 19:42:19.445 [INFO] src.pipeline: Run complete (340.4s total, 3 processed, 0 failed)
+2026-02-14 19:43:09.541 [INFO] src.main: ai-research-assistant starting
+2026-02-14 19:43:09.848 [INFO] src.pipeline: Starting run (0 new entries)
+2026-02-14 19:43:10.110 [INFO] src.pipeline: Run complete (0.6s total, 0 processed, 0 failed)
