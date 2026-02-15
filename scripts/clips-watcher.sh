@@ -12,5 +12,5 @@ cd "$PROJECT_DIR" || exit 1
   -e ".*" -i "\\.md$" | \
 while read -d "" event; do
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] Detected: $event"
-  uv run ai-research-assistant clips --file "$event"
+  /Users/boris.diebold/.local/bin/uv run ai-research-assistant clips --file "$event"
 done
