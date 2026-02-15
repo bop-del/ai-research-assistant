@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.bopvault.ai-research-assistant.clips-batch</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/boris.diebold/.local/bin/uv</string>
+        <string>run</string>
+        <string>ai-research-assistant</string>
+        <string>clips</string>
+        <string>--batch</string>
+    </array>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+    <key>WorkingDirectory</key>
+    <string>/Users/boris.diebold/code/ai-research-assistant</string>
+    <key>StandardOutPath</key>
+    <string>/Users/boris.diebold/code/ai-research-assistant/logs/clips-batch.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/boris.diebold/code/ai-research-assistant/logs/clips-batch-error.log</string>
+</dict>
+</plist>
