@@ -419,6 +419,35 @@ def status(last_run: bool, date: str | None, watch: bool):
 
 
 @cli.command()
+@click.option('--file', type=click.Path(exists=True), help='Process single clip file')
+@click.option('--batch', is_flag=True, help='Batch process all unprocessed clips')
+def clips(file, batch):
+    """Process web clipper captures from Unprocessed/."""
+    from pathlib import Path
+    from src.clips_pipeline import process_single_clip, process_batch_clips
+    from src.database import Database
+    from src.config import load_config, get_vault_path
+
+    if not file and not batch:
+        click.echo("Error: Specify --file <path> or --batch")
+        raise click.Abort()
+
+    if file and batch:
+        click.echo("Error: Cannot specify both --file and --batch")
+        raise click.Abort()
+
+    db_path = Path(__file__).parent.parent / "data" / "pipeline.db"
+    db = Database(db_path)
+
+    if file:
+        # Single file mode (fswatch trigger)
+        process_single_clip(Path(file), db)
+    else:
+        # Batch mode (hourly safety net)
+        process_batch_clips()
+
+
+@cli.command()
 @click.option('--json', 'output_json', is_flag=True, help='Output as JSON for /morning skill')
 @click.option('--days', '-d', type=int, default=7, help='Number of days to analyze')
 def stats(output_json: bool, days: int):
