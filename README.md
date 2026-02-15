@@ -167,6 +167,17 @@ src/
 5. New notes are post-processed with `/evaluate-knowledge` for additional personalized takeaways
 6. Results are tracked in SQLite (`data/pipeline.db`)
 
+## Clips Processing
+
+Instant processing for web clipper captures:
+
+- **fswatch monitoring** — Detects new files in `Clippings/Unprocessed/` (~1s delay)
+- **Instant processing** — Runs `/process-clippings` → `/evaluate-knowledge`
+- **Daily note integration** — Promoted articles appear in `## On-Demand Knowledge`
+- **Hourly safety net** — Batch mode catches missed files
+
+See [docs/clips-processing.md](docs/clips-processing.md) for details.
+
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for release history.

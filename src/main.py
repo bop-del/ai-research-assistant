@@ -439,12 +439,15 @@ def clips(file, batch):
     db_path = Path(__file__).parent.parent / "data" / "pipeline.db"
     db = Database(db_path)
 
+    config = load_config()
+    vault_path = get_vault_path(config)
+
     if file:
         # Single file mode (fswatch trigger)
-        process_single_clip(Path(file), db)
+        process_single_clip(Path(file), db, vault_path)
     else:
         # Batch mode (hourly safety net)
-        process_batch_clips()
+        process_batch_clips(db, vault_path)
 
 
 @cli.command()
