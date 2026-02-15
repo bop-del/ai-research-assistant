@@ -65,12 +65,50 @@ def process_single_clip(file_path: Path, db: Database, vault_path: Path | None =
         logger.error(f"[CLIPS] ✗ Exception: {file_path.name}: {e}")
 
 
-def process_batch_clips() -> None:
-    """Process all unprocessed clips in batch.
+def process_batch_clips(db: Database | None = None, vault_path: Path | None = None) -> None:
+    """Batch process all clips in Unprocessed/ (hourly safety net).
 
-    TODO: Implementation in next task.
+    Args:
+        db: Database instance (optional, will create if not provided)
+        vault_path: Path to the Obsidian vault root (optional, will load from config)
     """
-    pass
+    from .config import get_vault_path, load_config
+
+    if vault_path is None:
+        config = load_config()
+        vault_path = get_vault_path(config)
+
+    if db is None:
+        db_path = Path(__file__).parent.parent / "data" / "pipeline.db"
+        db = Database(db_path)
+
+    unprocessed_dir = vault_path / "Clippings" / "Unprocessed"
+
+    if not unprocessed_dir.exists():
+        logger.info("[CLIPS] No Unprocessed/ directory found")
+        return
+
+    # Find all .md files
+    clip_files = list(unprocessed_dir.glob("*.md"))
+
+    if not clip_files:
+        logger.info("[CLIPS] No unprocessed clips found")
+        return
+
+    logger.info(f"[CLIPS] Batch processing {len(clip_files)} clips")
+
+    processed = 0
+    skipped = 0
+
+    for clip_file in clip_files:
+        if db.is_clip_processed(str(clip_file)):
+            skipped += 1
+            continue
+
+        process_single_clip(clip_file, db, vault_path)
+        processed += 1
+
+    logger.info(f"[CLIPS] Batch complete: {processed} processed, {skipped} already done")
 
 
 def append_to_daily_note(article_title: str, category: str, insight: str) -> None:
