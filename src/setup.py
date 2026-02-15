@@ -2,6 +2,7 @@
 import os
 import shutil
 import stat
+import subprocess
 from pathlib import Path
 
 import click
@@ -118,6 +119,46 @@ def _copy_interest_profile(config: dict) -> None:
     profile_path.write_text(template_path.read_text())
     click.echo(f"  Created interest profile: {profile_path}")
     click.echo("  Please fill in your work and personal context for personalized suggestions.")
+
+
+def check_fswatch() -> bool:
+    """Check if fswatch is installed."""
+    result = subprocess.run(["which", "fswatch"], capture_output=True)
+    return result.returncode == 0
+
+
+def install_fswatch() -> None:
+    """Install fswatch via Homebrew."""
+    click.echo("Installing fswatch...")
+    result = subprocess.run(["brew", "install", "fswatch"])
+    if result.returncode != 0:
+        raise click.ClickException("Failed to install fswatch")
+    click.echo("✓ fswatch installed")
+
+
+def install_clips_launchd() -> None:
+    """Install launchd jobs for clips processing."""
+    project_dir = Path(__file__).parent.parent
+    home = Path.home()
+    launch_agents_dir = home / "Library" / "LaunchAgents"
+    launch_agents_dir.mkdir(exist_ok=True)
+
+    plists = [
+        "com.bopvault.ai-research-assistant.clips-watcher.plist",
+        "com.bopvault.ai-research-assistant.clips-batch.plist"
+    ]
+
+    for plist_name in plists:
+        source = project_dir / "config" / "launchd" / plist_name
+        dest = launch_agents_dir / plist_name
+
+        # Copy plist
+        shutil.copy(source, dest)
+
+        # Load with launchd
+        subprocess.run(["launchctl", "load", str(dest)], check=True)
+
+        click.echo(f"✓ Installed and loaded {plist_name}")
 
 
 def _check_dependencies() -> list[str]:
@@ -277,6 +318,17 @@ def setup(install_schedule: bool):
             click.echo(f"  Warning: {w}")
     else:
         click.echo("  All dependencies found.")
+
+    # Check and install fswatch
+    if not check_fswatch():
+        click.echo("fswatch not found, installing...")
+        install_fswatch()
+    else:
+        click.echo("✓ fswatch already installed")
+
+    # Install clips launchd jobs
+    if click.confirm("Install launchd jobs for clip watching?", default=True):
+        install_clips_launchd()
 
     # Optional: install schedule
     if install_schedule:
