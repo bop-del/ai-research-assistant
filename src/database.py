@@ -83,10 +83,21 @@ class Database:
         status TEXT CHECK (status IN ('running', 'completed', 'failed'))
     );
 
+    -- Clips processing tracking
+    CREATE TABLE IF NOT EXISTS clips_processed (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        file_path TEXT UNIQUE NOT NULL,
+        processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        note_path TEXT,
+        promoted BOOLEAN,
+        category TEXT
+    );
+
     -- Indexes for common queries
     CREATE INDEX IF NOT EXISTS idx_processed_guid ON processed_entries(entry_guid);
     CREATE INDEX IF NOT EXISTS idx_retry_next ON retry_queue(next_retry_at);
     CREATE INDEX IF NOT EXISTS idx_feeds_category ON feeds(category);
+    CREATE INDEX IF NOT EXISTS idx_clips_file_path ON clips_processed(file_path);
     """
 
     def __init__(self, db_path: Path):
@@ -136,6 +147,30 @@ class Database:
                (entry_guid, feed_id, entry_url, entry_title, note_path)
                VALUES (?, ?, ?, ?, ?)""",
             (entry_guid, feed_id, entry_url, entry_title, str(note_path) if note_path else None),
+        )
+        self.commit()
+
+    def is_clip_processed(self, file_path: str) -> bool:
+        """Check if clip file has already been processed."""
+        cursor = self.execute(
+            "SELECT 1 FROM clips_processed WHERE file_path = ?",
+            (file_path,),
+        )
+        return cursor.fetchone() is not None
+
+    def mark_clip_processed(
+        self,
+        file_path: str,
+        note_path: str | None,
+        promoted: bool,
+        category: str | None
+    ) -> None:
+        """Mark a clip as processed."""
+        self.execute(
+            """INSERT OR REPLACE INTO clips_processed
+               (file_path, note_path, promoted, category)
+               VALUES (?, ?, ?, ?)""",
+            (file_path, note_path, promoted, category)
         )
         self.commit()
 

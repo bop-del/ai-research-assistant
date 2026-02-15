@@ -283,3 +283,52 @@ def test_get_pipeline_run_details_with_failed_items():
         assert len(result['failed']) == 1
         assert result['failed'][0]['entry_title'] == 'Failed Article'
         assert result['failed'][0]['last_error'] == 'Network timeout'
+
+
+def test_clips_processed_table_exists():
+    """Test that clips_processed table is created."""
+    from src.database import Database
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_path = Path(tmpdir) / "test.db"
+        db = Database(db_path)
+        cursor = db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='clips_processed'")
+        assert cursor.fetchone() is not None
+
+
+def test_is_clip_processed_false_for_new_file():
+    """Test that new clip is not marked as processed."""
+    from src.database import Database
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_path = Path(tmpdir) / "test.db"
+        db = Database(db_path)
+        assert not db.is_clip_processed("/path/to/clip.md")
+
+
+def test_mark_clip_processed():
+    """Test marking a clip as processed."""
+    from src.database import Database
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_path = Path(tmpdir) / "test.db"
+        db = Database(db_path)
+        db.mark_clip_processed(
+            file_path="/path/to/clip.md",
+            note_path="/path/to/note.md",
+            promoted=True,
+            category="AI-Acceleration"
+        )
+        assert db.is_clip_processed("/path/to/clip.md")
+
+
+def test_mark_clip_processed_duplicate_ignores():
+    """Test that marking same clip twice doesn't error."""
+    from src.database import Database
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_path = Path(tmpdir) / "test.db"
+        db = Database(db_path)
+        db.mark_clip_processed("/path/to/clip.md", "/path/to/note.md", True, "AI")
+        # Should not raise error
+        db.mark_clip_processed("/path/to/clip.md", "/path/to/note.md", True, "AI")
