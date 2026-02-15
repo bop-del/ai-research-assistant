@@ -78,6 +78,8 @@ This auto-detects your platform:
 
 To customize the schedule time, set `schedule.hour` and `schedule.minute` in `config/user.yaml` and re-run setup.
 
+**⚠️ Claude Code Session Timing**: If you use Claude Code CLI during work hours, schedule the automation to run **outside** your primary usage window. Claude uses 5-hour rolling session limits that start on first request. Example: automation at 2:00 AM completes before 7:00 AM session reset, ensuring clean 5-hour sessions during work hours (7:30-12:30, 12:30-17:30).
+
 To remove the schedule:
 - **macOS**: `launchctl unload ~/Library/LaunchAgents/com.claude.ai-research-assistant.plist`
 - **Linux**: `crontab -e` and remove the `# ai-research-assistant` lines

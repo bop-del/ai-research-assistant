@@ -48,11 +48,13 @@ uv run ai-research-assistant --help
 
 ## Automation
 
-### Launchd (Daily 4:00 AM)
+### Launchd (Daily 2:00 AM)
 
 **Configuration:** `~/Library/LaunchAgents/com.bop.ai-research-assistant.plist`
 
-**Schedule:** Daily at 4:00 AM
+**Schedule:** Daily at 2:00 AM
+
+**Rationale:** Scheduled at 2:00 AM to complete before 7:00 AM Claude session reset, ensuring two clean 5-hour Claude Code sessions during work hours (7:30-12:30, 12:30-17:30). See [Claude Session Timing](#claude-session-timing) below.
 
 **Logs:** `~/code/ai-research-assistant/logs/pipeline.log`
 
@@ -77,29 +79,44 @@ tail -f ~/code/ai-research-assistant/logs/pipeline.log
 
 ### Wake from Sleep
 
-**Configuration:** Wake Mac at 3:55 AM daily (5 min before RSS processing)
+**Configuration:** Wake Mac at 1:55 AM daily (5 min before RSS processing)
 
 ```bash
 # Set wake schedule
-sudo pmset repeat wakeorpoweron MTWRFSU 03:55:00
+sudo pmset repeat wakeorpoweron MTWRFSU 01:55:00
 
 # Verify
 sudo pmset -g sched
 # Should show:
 # Repeating power events:
-#   wakeorpoweron  MTWRFSU  03:55:00
+#   wakeorpoweron  MTWRFSU  01:55:00
 
 # Cancel (if needed)
 sudo pmset repeat cancel
 ```
 
 **Daily sequence:**
-1. **3:55 AM** - Mac wakes from sleep (pmset)
-2. **4:00 AM** - RSS feeds processed (launchd → `uv run ai-research-assistant run`)
+1. **1:55 AM** - Mac wakes from sleep (pmset)
+2. **2:00 AM** - RSS feeds processed (launchd → `uv run ai-research-assistant run`)
 3. Articles processed through `/pkm:article`
 4. Auto-evaluation via `/pkm:evaluate-knowledge`
 5. Promotion to `Knowledge/` or discard to `Clippings/Discarded/`
 6. Mac can sleep again
+
+### Claude Session Timing
+
+**Important:** This automation uses the same Claude Code account as interactive CLI usage. Claude enforces 5-hour rolling session limits that start on the **first request**, not when tasks complete.
+
+**Optimization strategy:**
+- **Automation**: Runs at 2:00 AM, completes by ~2:30 AM
+- **Session reset**: 5 hours later at 7:00 AM
+- **Work sessions**: Two clean 5-hour windows
+  - Session 1: 7:30 AM - 12:30 PM
+  - Session 2: 12:30 PM - 5:30 PM
+
+**Why 2:00 AM?** Earlier than work hours (7:30 AM start) ensures the automation's session resets before workday begins, preventing token budget sharing between automation and interactive use.
+
+**Weekly caps:** Claude also has 7-day usage limits separate from 5-hour sessions. Monitor usage if running both automation and heavy interactive sessions daily.
 
 ### Integration with /morning
 
@@ -288,7 +305,7 @@ launchctl start com.bop.ai-research-assistant
 tail -f ~/code/ai-research-assistant/logs/pipeline.log
 ```
 
-### Mac not waking at 3:55 AM
+### Mac not waking at 1:55 AM
 
 ```bash
 # Verify wake schedule
@@ -296,10 +313,10 @@ sudo pmset -g sched
 
 # Should show:
 # Repeating power events:
-#   wakeorpoweron  MTWRFSU  03:55:00
+#   wakeorpoweron  MTWRFSU  01:55:00
 
 # Re-apply if missing
-sudo pmset repeat wakeorpoweron MTWRFSU 03:55:00
+sudo pmset repeat wakeorpoweron MTWRFSU 01:55:00
 ```
 
 ### Duplicate processing
@@ -393,7 +410,7 @@ Location: `~/Library/LaunchAgents/com.bop.ai-research-assistant.plist`
     <key>StartCalendarInterval</key>
     <dict>
         <key>Hour</key>
-        <integer>4</integer>
+        <integer>2</integer>
         <key>Minute</key>
         <integer>0</integer>
     </dict>
@@ -425,9 +442,10 @@ Location: `~/Library/LaunchAgents/com.bop.ai-research-assistant.plist`
 **Setup completed:** 2026-02-14
 
 **Automation status:** ✅ Active
-- Launchd: Loaded, scheduled daily 4:00 AM
-- Wake schedule: Configured (3:55 AM daily)
+- Launchd: Loaded, scheduled daily 2:00 AM
+- Wake schedule: Configured (1:55 AM daily)
 - Integration: `/morning` skill updated with RSS processing step
+- Claude session optimization: Scheduled for pre-work hours to maximize token budget
 
 **Next steps:**
 - Monitor discard-log.md for false positives/negatives (weekly)
