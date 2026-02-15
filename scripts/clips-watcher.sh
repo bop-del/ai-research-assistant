@@ -7,7 +7,7 @@ PROJECT_DIR="$HOME/code/ai-research-assistant"
 cd "$PROJECT_DIR" || exit 1
 
 # Monitor Unprocessed/ for new .md files
-fswatch -0 --event Created \
+/opt/homebrew/bin/fswatch -0 --event Created \
   "$VAULT/Clippings/Unprocessed" \
   -e ".*" -i "\\.md$" | \
 while read -d "" event; do
