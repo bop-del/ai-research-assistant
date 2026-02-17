@@ -174,21 +174,28 @@ class SkillRunner:
             # Check if this is a permanent failure (paywall, etc.)
             output_lower = result.stdout.lower()
             is_permanent = any(p in output_lower for p in PERMANENT_FAILURE_PATTERNS)
-            error_msg = (
-                "Content behind paywall or not extractable"
-                if is_permanent
-                else "Skill completed but no note path found in output"
-            )
-            self.logger.warning(f"  ✗ Skill completed but no note path found ({duration:.1f}s)")
-            sys.stdout.flush()  # Ensure real-time log updates
-            return SkillResult(
-                success=False,
-                note_path=None,
-                error=error_msg,
-                stdout=result.stdout,
-                stderr=result.stderr,
-                permanent=is_permanent,
-            )
+
+            if not is_permanent:
+                # Filesystem fallback: skill may have written the file without mentioning the path
+                output_dir = self._vault_path / output_folder
+                note_path = self._find_recently_created_note(output_dir, within_seconds=duration + 5)
+
+            if note_path is None:
+                error_msg = (
+                    "Content behind paywall or not extractable"
+                    if is_permanent
+                    else "Skill completed but no note path found in output"
+                )
+                self.logger.warning(f"  ✗ Skill completed but no note path found ({duration:.1f}s)")
+                sys.stdout.flush()  # Ensure real-time log updates
+                return SkillResult(
+                    success=False,
+                    note_path=None,
+                    error=error_msg,
+                    stdout=result.stdout,
+                    stderr=result.stderr,
+                    permanent=is_permanent,
+                )
 
         if not note_path.exists():
             self.logger.warning(f"  ✗ Note path not found: {note_path} ({duration:.1f}s)")
@@ -215,12 +222,19 @@ class SkillRunner:
         """Extract note path from skill output.
 
         Skills typically output lines like:
+        - "NOTE_PATH: /absolute/path/to/file.md" (machine-readable marker, preferred)
         - "Done. I've saved the article analysis to **Clippings/Title.md**."
         - "Done. I've created the note at `Clippings/Title.md`."
         - "Note saved to Clippings/Youtube extractions/Title.md"
         - "Successfully wrote note to Clippings/Article extractions/Title.md"
         """
         output_dir = self._vault_path / folder
+
+        # Pattern 0: NOTE_PATH: /absolute/path/to/file.md (machine-readable marker)
+        note_path_pattern = r"^NOTE_PATH:\s*(.+\.md)\s*$"
+        match = re.search(note_path_pattern, stdout, re.MULTILINE)
+        if match:
+            return Path(match.group(1).strip())
 
         # Pattern 1: **Folder/Filename.md** (bold markdown)
         bold_pattern = r"\*\*([^*]+\.md)\*\*"
@@ -254,5 +268,34 @@ class SkillRunner:
             if "/" in filename:
                 return self._vault_path / filename
             return output_dir / filename
+
+        return None
+
+    def _find_recently_created_note(self, output_dir: Path, within_seconds: float) -> Path | None:
+        """Filesystem fallback: find a .md file created in output_dir within the last N seconds.
+
+        Used when skill output doesn't contain a parseable note path. Returns the
+        file only if exactly one new .md file was created during the skill run,
+        to avoid false positives.
+        """
+        if not output_dir.exists():
+            return None
+
+        import time
+
+        cutoff = time.time() - within_seconds
+        new_files = [
+            f for f in output_dir.iterdir()
+            if f.suffix == ".md" and f.stat().st_mtime >= cutoff
+        ]
+
+        if len(new_files) == 1:
+            self.logger.debug(f"Filesystem fallback found: {new_files[0].name}")
+            return new_files[0]
+
+        if len(new_files) > 1:
+            self.logger.debug(
+                f"Filesystem fallback: {len(new_files)} new files found, skipping (ambiguous)"
+            )
 
         return None
