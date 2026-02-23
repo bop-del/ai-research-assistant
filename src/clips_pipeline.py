@@ -23,17 +23,27 @@ def process_single_clip(file_path: Path, db: Database, vault_path: Path | None =
         logger.info(f"[CLIPS] Already processed: {file_path.name}")
         return
 
+    # Use a lock file to prevent watcher and batch runner from processing the same file concurrently
+    lock_file = file_path.with_suffix(".lock")
+    try:
+        lock_file.touch(exist_ok=False)  # Fails if lock already exists
+    except FileExistsError:
+        logger.info(f"[CLIPS] Skipping (in progress by another process): {file_path.name}")
+        return
+
     logger.info(f"[CLIPS] Processing: {file_path.name}")
 
     # Construct plugin directory paths
     plugin_dir_pkm = vault_path / "Claude" / "skills-pkm"
     plugin_dir_cto = vault_path / "Claude" / "skills-cto"
+    mcp_config = Path(__file__).parent.parent / "config" / "mcp-minimal.json"
 
     # Build command
     cmd = [
-        "claude",
+        str(Path.home() / ".local/bin/claude"),
         "--plugin-dir", str(plugin_dir_pkm),
         "--plugin-dir", str(plugin_dir_cto),
+        "--mcp-config", str(mcp_config),
         "--print",
         "--dangerously-skip-permissions",
         f"/pkm:process-clippings \"{file_path}\"",
@@ -55,48 +65,76 @@ def process_single_clip(file_path: Path, db: Database, vault_path: Path | None =
         if result.returncode == 0:
             logger.info(f"[CLIPS] ✓ Processed: {file_path.name}")
 
-            # TODO: Parse skill output to check if promoted and extract details
-            # Expected output format from skill:
-            # PROMOTED: yes|no
-            # CATEGORY: <category>
-            # TITLE: <title>
-            # INSIGHT: <insight>
-            # For now, we'll mark as processed without promotion tracking
-
-            # Check if output indicates promotion
-            promoted = False
-            category = None
-            title = None
-            insight = None
-
-            # Simple parsing (TODO: enhance this based on actual skill output format)
-            output_lines = result.stdout.split("\n")
-            for line in output_lines:
-                if line.startswith("PROMOTED:"):
-                    promoted = line.split(":", 1)[1].strip().lower() == "yes"
-                elif line.startswith("CATEGORY:"):
-                    category = line.split(":", 1)[1].strip()
-                elif line.startswith("TITLE:"):
-                    title = line.split(":", 1)[1].strip()
-                elif line.startswith("INSIGHT:"):
-                    insight = line.split(":", 1)[1].strip()
-
-            # If promoted, append to daily note
-            if promoted and title and category and insight:
-                try:
-                    append_to_daily_note(title, category, insight, vault_path)
-                except Exception as e:
-                    logger.error(f"[CLIPS] Failed to append to daily note: {e}")
+            # Find the output note (process-clippings moves file from Unprocessed/ to Articles/)
+            # Note name is preserved, just location changes
+            articles_dir = vault_path / "Clippings" / "Articles"
+            note_path = articles_dir / file_path.name
 
             # Mark as processed
-            db.mark_clip_processed(str(file_path), note_path=None, promoted=promoted, category=category)
+            db.mark_clip_processed(str(file_path), note_path=str(note_path) if note_path.exists() else None, promoted=False, category=None)
+
+            # Run /evaluate-knowledge on the new note
+            if note_path.exists():
+                _evaluate_note(note_path, vault_path)
         else:
-            logger.error(f"[CLIPS] ✗ Failed: {file_path.name}: {result.stderr}")
+            stderr_tail = result.stderr.strip()[-500:] if result.stderr.strip() else ""
+            stdout_tail = result.stdout.strip()[-200:] if result.stdout.strip() else ""
+            detail = stderr_tail or stdout_tail or "(no output)"
+            logger.error(f"[CLIPS] ✗ Failed: {file_path.name}: exit={result.returncode} — {detail}")
 
     except subprocess.TimeoutExpired:
         logger.error(f"[CLIPS] ✗ Timeout: {file_path.name}")
     except Exception as e:
         logger.error(f"[CLIPS] ✗ Exception: {file_path.name}: {e}")
+    finally:
+        lock_file.unlink(missing_ok=True)
+
+
+def _evaluate_note(note_path: Path, vault_path: Path) -> None:
+    """Run /evaluate-knowledge on a single note after successful clip processing."""
+    claude = str(Path.home() / ".local/bin/claude")
+    plugin_dir_pkm = vault_path / "Claude" / "skills-pkm"
+    plugin_dir_cto = vault_path / "Claude" / "skills-cto"
+    mcp_config = Path(__file__).parent.parent / "config" / "mcp-minimal.json"
+
+    try:
+        rel_path = note_path.relative_to(vault_path)
+    except ValueError:
+        rel_path = note_path
+
+    env = {**os.environ, "CLAUDECODE": ""}
+
+    try:
+        eval_result = subprocess.run(
+            [
+                claude,
+                "--plugin-dir", str(plugin_dir_pkm),
+                "--plugin-dir", str(plugin_dir_cto),
+                "--mcp-config", str(mcp_config),
+                "--print",
+                "--dangerously-skip-permissions",
+                f'/pkm:evaluate-knowledge "{rel_path}"',
+            ],
+            env=env,
+            timeout=300,
+            capture_output=True,
+            text=True,
+        )
+
+        if eval_result.returncode == 0:
+            logger.info(f"[CLIPS] ✓ Evaluated: {note_path.name}")
+            if eval_result.stdout:
+                for line in eval_result.stdout.strip().split("\n"):
+                    if line.strip():
+                        logger.info(f"  {line}")
+        else:
+            stderr_tail = eval_result.stderr.strip()[-300:] if eval_result.stderr.strip() else "(no stderr)"
+            logger.warning(f"[CLIPS] ✗ Evaluate failed: {note_path.name}: {stderr_tail}")
+
+    except subprocess.TimeoutExpired:
+        logger.warning(f"[CLIPS] ✗ Evaluate timed out: {note_path.name}")
+    except Exception as e:
+        logger.warning(f"[CLIPS] ✗ Evaluate exception: {note_path.name}: {e}")
 
 
 def process_batch_clips(db: Database | None = None, vault_path: Path | None = None) -> None:
